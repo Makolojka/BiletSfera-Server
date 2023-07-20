@@ -2,6 +2,7 @@
 
 import userManager from './user.manager';
 import postManager from './post.manager';
+import eventManager from "./event.manager";
 
 
 function getter(manager, request) {
@@ -12,5 +13,6 @@ function getter(manager, request) {
 
 export default {
     getUserManager: getter(userManager),
-    getPostManager: getter(postManager)
+    getPostManager: getter(postManager),
+    getEventManager: getter(eventManager)
 };
