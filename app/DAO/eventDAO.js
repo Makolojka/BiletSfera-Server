@@ -16,13 +16,24 @@ const eventSchema = new mongoose.Schema({
     title: {type: String},
     image: {type: String},
     text: {type: String},
+    additionalText: {type: String},
+    organiser: {type: String},
     tickets: [ticketSchema],
     date: {type: String},
     location: {type: String},
+    category: { type: [String] },
+    subCategory: { type: [String] },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+
+    // Artists array
+    artists: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'artists',
+    }],
 
     // Likes and follows
-    likedEvents: {type: [ObjectId]},
-    followedEvents:  {type: [ObjectId]},
+    likedEvents: { type: [mongoose.Schema.Types.ObjectId] },
+    followedEvents: { type: [mongoose.Schema.Types.ObjectId] },
 
     // Views of one event
     views: { type: Number, default: 0 },
