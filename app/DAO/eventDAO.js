@@ -4,12 +4,14 @@ import mongoConverter from '../service/mongoConverter';
 import * as _ from "lodash";
 import {ObjectId} from "mongodb";
 
-const ticketSchema = new mongoose.Schema({
-    type: { type: String },
-    price: { type: Number },
-    dayOfWeek: { type: String },
-    date: { type: String },
-});
+// //TODO: przerobić ticket na kolekcję
+// const ticketSchema = new mongoose.Schema({
+//     type: { type: String },
+//     price: { type: Number },
+//     dayOfWeek: { type: String },
+//     date: { type: String },
+// });
+// const TicketModel = mongoose.model('tickets', ticketSchema);
 
 const eventSchema = new mongoose.Schema({
     // Basic event info
@@ -18,12 +20,17 @@ const eventSchema = new mongoose.Schema({
     text: {type: String},
     additionalText: {type: String},
     organiser: {type: String},
-    tickets: [ticketSchema],
     date: {type: String},
     location: {type: String},
     category: { type: [String] },
     subCategory: { type: [String] },
     createdAt: { type: String, default: () => new Date().toISOString() },
+
+    //Tickets array
+    tickets: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'tickets'
+    }],
 
     // Artists array
     artists: [{
