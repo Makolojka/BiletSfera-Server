@@ -3,6 +3,7 @@ import uniqueValidator from 'mongoose-unique-validator';
 import mongoConverter from '../service/mongoConverter';
 import * as _ from "lodash";
 import {ObjectId} from "mongodb";
+import applicationException from "../service/applicationException";
 
 // //TODO: przerobić ticket na kolekcję
 // const ticketSchema = new mongoose.Schema({
@@ -39,8 +40,8 @@ const eventSchema = new mongoose.Schema({
     }],
 
     // Likes and follows
-    likedEvents: { type: [mongoose.Schema.Types.ObjectId] },
-    followedEvents: { type: [mongoose.Schema.Types.ObjectId] },
+    likes: { type: [mongoose.Schema.Types.ObjectId] },
+    followers: { type: [mongoose.Schema.Types.ObjectId] },
 
     // Views of one event
     views: { type: Number, default: 0 },
@@ -82,10 +83,85 @@ async function createNewOrUpdate(data) {
     });
 }
 
+// Followers and Likes
+async function addLikeOrFollower(eventId, userId, actionType) {
+    try {
+        const event = await EventModel.findOne({ _id: eventId });
+        if(actionType && actionType=='like'){
+            const checkLikes = await EventModel.findOne({ _id: eventId, likes: userId});
+            if (event) {
+                if(!checkLikes)
+                {
+                    //If recipe is not liked, like it
+                    return EventModel.updateOne({ _id : eventId }, {$push: {likes: userId}}, {new: true})
+                }
+                else
+                {
+                    //If recipe is liked, dislike it
+                    return EventModel.updateOne({ _id : eventId }, {$pull: {likes: userId}})
+                }
+            } else {
+                throw applicationException.new(applicationException.NOT_FOUND, 'Event not found');
+            }
+        }
+        else
+        {
+            const checkFollows = await EventModel.findOne({ _id: eventId, followers: userId});
+            if (event) {
+                if(!checkFollows)
+                {
+                    //If recipe is not liked, like it
+                    return EventModel.updateOne({ _id : eventId }, {$push: {followers: userId}}, {new: true})
+                }
+                else
+                {
+                    //If recipe is liked, dislike it
+                    return EventModel.updateOne({ _id : eventId }, {$pull: {followers: userId}})
+                }
+            } else {
+                throw applicationException.new(applicationException.NOT_FOUND, 'Event not found');
+            }
+        }
+
+    } catch (error) {
+        throw error;
+    }
+}
+
+async function getLikesOrFollowersCount(eventId, actionType, res) {
+    try {
+        let fieldToCount;
+
+        if (actionType === 'like') {
+            fieldToCount = 'likes';
+        } else if (actionType === 'follow') {
+            fieldToCount = 'followers';
+        } else {
+            throw new Error('Invalid action. Please provide either "like" or "follow".');
+        }
+
+        const event = await EventModel.findById(eventId).select(fieldToCount);
+
+        if (!event) {
+            throw new Error('Event not found.');
+        }
+
+        const count = event[fieldToCount].length;
+
+        // Send the count as a response
+        res.status(200).json({ count });
+    } catch (error) {
+        // Handle errors and send an error response
+        res.status(500).json({ error: error.message });
+    }
+}
+
 export default {
     query: query,
     get: get,
     createNewOrUpdate: createNewOrUpdate,
+    getLikesOrFollowersCount: getLikesOrFollowersCount,
+    addLikeOrFollower: addLikeOrFollower,
 
     model: EventModel
 };

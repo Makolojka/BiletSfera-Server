@@ -87,5 +87,32 @@ const userEndpoint = (router) => {
             res.status(500).json({ error: error.message });
         }
     });
+
+    // TODO: dodać auth
+    //Likes and follows
+    router.post('/api/profile/:userId/:actionType', async (request, response, next) => {
+        try {
+            const userId = request.params.userId;
+            const actionType = request.params.actionType;
+            const eventId = request.body.eventId;
+            let result = await userDAO.likeOrFollowEvent(userId, eventId, actionType);
+
+            response.status(200).send(result);
+        } catch (error) {
+            applicationException.errorHandler(error, response);
+        }
+    });
+
+    router.get('/api/profile/:userId/:actionType', async (request, response, next) => {
+        try {
+            const userId = request.params.userId;
+            const actionType = request.params.actionType;
+            let result = await userDAO.getLikedOrFollowedEvents(userId, actionType)
+            response.status(200).send(result);
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
 };
 export default userEndpoint;

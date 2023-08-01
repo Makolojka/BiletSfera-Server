@@ -1,4 +1,7 @@
 import business from '../business/business.container';
+import eventDAO from "../DAO/eventDAO";
+import userDAO from "../DAO/userDAO";
+import applicationException from "../service/applicationException";
 
 const eventEndpoint = (router) => {
     // Get all events
@@ -26,7 +29,33 @@ const eventEndpoint = (router) => {
             console.log(error);
         }
     });
+    // TODO: Lepiej przesyłać przez parametry czy przez body?
+    // Get Likes or followers
+    router.post('/api/event/likes-follows/:userId/:actionType', async (request, response, next) => {
+        try {
+            const userId = request.params.userId;
+            const actionType = request.params.actionType;
+            const eventId = request.body.eventId;
+            let result = await eventDAO.addLikeOrFollower(eventId, userId, actionType);
 
+            response.status(200).send(result);
+        } catch (error) {
+            applicationException.errorHandler(error, response);
+        }
+    });
+
+    router.get('/api/event/:eventId/follow-likes/:actionType', async (request, response, next) => {
+        try {
+            const eventId = request.params.eventId;
+            const actionType = request.params.actionType;
+
+            // Call the function to get the count and pass the response object to it
+            await eventDAO.getLikesOrFollowersCount(eventId, actionType, response);
+        } catch (error) {
+            // Handle errors and send an error response
+            response.status(500).json({ error: error.message });
+        }
+    });
 
 
 };
