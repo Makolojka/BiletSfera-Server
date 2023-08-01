@@ -118,7 +118,7 @@ async function addToCart(userId, eventId, ticketId, quantity) {
     }
 }
 
-async function removeFromCart(userId, eventId, ticketId) {
+async function removeFromCart(userId, eventId, ticketId, quantity) {
     try {
         const user = await UserModel.findOne({ _id: userId });
         if (!user) {
@@ -135,11 +135,12 @@ async function removeFromCart(userId, eventId, ticketId) {
             throw applicationException.new(applicationException.NOT_FOUND, 'Ticket not found in the cart');
         }
 
-        if (existingTicket.quantity > 1) {
-            existingTicket.quantity -= 1;
-        } else {
-            // Remove the entire ticket from the array if the quantity is 1
+        if (quantity && quantity >= existingTicket.quantity) {
+            // If the requested quantity is greater than or equal to the current quantity, remove the entire ticket
             existingCart.tickets = existingCart.tickets.filter(ticket => ticket.ticket.toString() !== ticketId);
+        } else {
+            // Otherwise, decrement the ticket quantity by the requested amount
+            existingTicket.quantity -= quantity || 1;
         }
 
         // If there are no more tickets for the event, remove the entire event from the cart
@@ -155,6 +156,29 @@ async function removeFromCart(userId, eventId, ticketId) {
     }
 }
 
+// async function getCart(userId) {
+//     try {
+//         const user = await UserModel.findOne({ _id: userId }).populate('cart.event cart.tickets.ticket');
+//         if (!user) {
+//             throw applicationException.new(applicationException.NOT_FOUND, 'User not found');
+//         }
+//
+//         // Populate the cart items with event and ticket details
+//         const populatedCart = user.cart.map(item => {
+//             const populatedEvent = item.event;
+//             const populatedTickets = item.tickets.map(ticket => ticket.ticket);
+//             return {
+//                 event: populatedEvent,
+//                 tickets: populatedTickets,
+//             };
+//         });
+//
+//         return populatedCart;
+//     } catch (error) {
+//         throw error;
+//     }
+// }
+
 async function getCart(userId) {
     try {
         const user = await UserModel.findOne({ _id: userId }).populate('cart.event cart.tickets.ticket');
@@ -162,10 +186,14 @@ async function getCart(userId) {
             throw applicationException.new(applicationException.NOT_FOUND, 'User not found');
         }
 
-        // Populate the cart items with event and ticket details
+        // Populate the cart items with event and ticket details, including quantity
         const populatedCart = user.cart.map(item => {
             const populatedEvent = item.event;
-            const populatedTickets = item.tickets.map(ticket => ticket.ticket);
+            const populatedTickets = item.tickets.map(ticketWithQuantity => {
+                const ticket = ticketWithQuantity.ticket.toObject();
+                ticket.quantity = ticketWithQuantity.quantity;
+                return ticket;
+            });
             return {
                 event: populatedEvent,
                 tickets: populatedTickets,

@@ -33,9 +33,18 @@ const userEndpoint = (router) => {
     });
 
     //Cart
-    router.post('/api/user/:userId/cart/add-ticket/:eventId/:ticketId', async (req, res) => {
+    // Add ticket(s) to cart
+    router.post('/api/user/:userId/cart/add-ticket/:eventId/:ticketId', auth, async (req, res) => {
         const { userId, eventId, ticketId } = req.params;
-        const { quantity } = req.body;
+        let { quantity } = req.body;
+
+        // If quantity is not provided or is not a valid number, set it to 1
+        if (!quantity || isNaN(quantity)) {
+            quantity = 1;
+        } else {
+            // Ensure quantity is an integer
+            quantity = parseInt(quantity);
+        }
 
         try {
             const user = await userDAO.addToCart(userId, eventId, ticketId, quantity);
@@ -45,18 +54,30 @@ const userEndpoint = (router) => {
         }
     });
 
-    router.post('/api/user/:userId/cart/remove-ticket/:eventId/:ticketId', async (req, res) => {
+    // Remove ticket(s) from cart
+    router.post('/api/user/:userId/cart/remove-ticket/:eventId/:ticketId', auth, async (req, res) => {
         const { userId, eventId, ticketId } = req.params;
+        let { quantity } = req.body;
+
+        // If quantity is not provided or is not a valid number, set it to 1
+        if (!quantity || isNaN(quantity)) {
+            quantity = 1;
+        } else {
+            // Ensure quantity is an integer
+            quantity = parseInt(quantity);
+        }
 
         try {
-            const user = await userDAO.removeFromCart(userId, eventId, ticketId);
+            const user = await userDAO.removeFromCart(userId, eventId, ticketId, quantity);
             res.status(200).json({ success: true, user });
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
     });
 
-    router.get('/api/user/:userId/cart', async (req, res) => {
+
+    // Get user's cart
+    router.get('/api/user/:userId/cart', auth, async (req, res) => {
         const { userId } = req.params;
 
         try {
