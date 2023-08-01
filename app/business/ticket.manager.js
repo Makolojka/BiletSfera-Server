@@ -1,23 +1,22 @@
-import postDAO from '../DAO/postDAO';
+import ticketDAO from "../DAO/ticketDAO";
 
-//TODO: przerobić create na interfejs?
 function create(context) {
     async function query() {
-        let result = postDAO.query();
+        let result = ticketDAO.query();
         if (result) {
             return result;
         }
     }
 
     async function get(id) {
-        let result = await postDAO.get(id);
+        let result = await ticketDAO.get(id);
         if (result) {
             return result;
         }
     }
 
     async function createNewOrUpdate(data) {
-        let result = await postDAO.createNewOrUpdate(data);
+        let result = await ticketDAO.createNewOrUpdate(data);
         if (result) {
             return result;
         }
