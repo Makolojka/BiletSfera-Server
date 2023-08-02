@@ -90,11 +90,11 @@ const userEndpoint = (router) => {
 
     // TODO: dodać auth
     //Likes and follows
-    router.post('/api/profile/:userId/:actionType', async (request, response, next) => {
+    router.post('/api/profile/like-follow/:userId/:eventId/:actionType', async (request, response, next) => {
         try {
             const userId = request.params.userId;
+            const eventId = request.params.eventId;
             const actionType = request.params.actionType;
-            const eventId = request.body.eventId;
             let result = await userDAO.likeOrFollowEvent(userId, eventId, actionType);
 
             response.status(200).send(result);
@@ -103,7 +103,7 @@ const userEndpoint = (router) => {
         }
     });
 
-    router.get('/api/profile/:userId/:actionType', async (request, response, next) => {
+    router.get('/api/profile/likes-follows/:userId/:actionType', async (request, response, next) => {
         try {
             const userId = request.params.userId;
             const actionType = request.params.actionType;
@@ -111,6 +111,29 @@ const userEndpoint = (router) => {
             response.status(200).send(result);
         } catch (error) {
             console.log(error);
+        }
+    });
+
+    // Get the count of followed and liked events
+    router.get('/api/profile/likes-follows/:userId', async (request, response, next) => {
+        try {
+            const userId = request.params.userId;
+            const user = await userDAO.get(userId);
+
+            if (!user) {
+                return response.status(404).json({ error: 'User not found' });
+            }
+
+            const followedEventsCount = await userDAO.countFollowedEvents(userId);
+            const likedEventsCount = await userDAO.countLikedEvents(userId);
+
+            response.status(200).json({
+                followedEventsCount: followedEventsCount,
+                likedEventsCount: likedEventsCount,
+            });
+        } catch (error) {
+            console.log(error);
+            response.status(500).json({ error: 'Internal server error' });
         }
     });
 

@@ -4,6 +4,7 @@ import mongoConverter from '../service/mongoConverter';
 import * as _ from "lodash";
 import {ObjectId} from "mongodb";
 
+//TODO: Dodać liczbę dostepnych biletów
 const ticketSchema = new mongoose.Schema({
     type: { type: String },
     price: { type: Number },

@@ -189,17 +189,19 @@ async function getCart(userId) {
 // TODO: do poprawy kod, rozwiązanie tymczasowe
 async function likeOrFollowEvent(userId, eventId, actionType) {
     try {
+        console.log("userId server:"+userId);
         const user = await UserModel.findOne({ _id: userId });
+        console.log("user server:"+user);
         const checkLikes = await UserModel.findOne({ _id: userId, [actionType]: eventId});
         if (user) {
             if(!checkLikes)
             {
-                //If recipe is not liked, like it
+                //If event is not liked, like it
                 return UserModel.updateOne({ _id : userId }, {$push: {[actionType]: eventId}}, {new: true})
             }
             else
             {
-                //If recipe is liked, dislike it
+                //If event is liked, dislike it
                 return UserModel.updateOne({ _id : userId }, {$pull: {[actionType]: eventId}})
             }
         } else {
@@ -210,49 +212,6 @@ async function likeOrFollowEvent(userId, eventId, actionType) {
         throw error;
     }
 }
-// async function likeEvent(userId, eventId, actionType) {
-//     try {
-//         const user = await UserModel.findOne({ _id: userId });
-//         if(actionType && actionType=='like'){
-//             const checkLikes = await UserModel.findOne({ _id: userId, likedEvents: eventId});
-//             if (user) {
-//                 if(!checkLikes)
-//                 {
-//                     //If recipe is not liked, like it
-//                     return UserModel.updateOne({ _id : userId }, {$push: {likedEvents: eventId}}, {new: true})
-//                 }
-//                 else
-//                 {
-//                     //If recipe is liked, dislike it
-//                     return UserModel.updateOne({ _id : userId }, {$pull: {likedEvents: eventId}})
-//                 }
-//             } else {
-//                 throw applicationException.new(applicationException.NOT_FOUND, 'User not found');
-//             }
-//         }
-//         else
-//         {
-//             const checkFollows = await UserModel.findOne({ _id: userId, followedEvents: eventId});
-//             if (user) {
-//                 if(!checkFollows)
-//                 {
-//                     //If recipe is not liked, like it
-//                     return UserModel.updateOne({ _id : userId }, {$push: {followedEvents: eventId}}, {new: true})
-//                 }
-//                 else
-//                 {
-//                     //If recipe is liked, dislike it
-//                     return UserModel.updateOne({ _id : userId }, {$pull: {followedEvents: eventId}})
-//                 }
-//             } else {
-//                 throw applicationException.new(applicationException.NOT_FOUND, 'User not found');
-//             }
-//         }
-//
-//     } catch (error) {
-//         throw error;
-//     }
-// }
 
 async function getLikedOrFollowedEvents(userId, actionType) {
     let user;
@@ -268,14 +227,14 @@ async function getLikedOrFollowedEvents(userId, actionType) {
         return EventModel.model;
     }
     //Find recipe of given likedRecipes id
-    if(actionType && actionType=='like'){
+    if(actionType && actionType==='like'){
         return EventModel.model.find({_id:user.likedEvents}).then(function (result) {
         if (result) {
             console.log("result: "+result);
             return mongoConverter(result);
         }
     });
-    } else
+    } else if(actionType && actionType==='follow')
     {
         return EventModel.model.find({_id:user.followedEvents}).then(function (result) {
             if (result) {
@@ -284,6 +243,27 @@ async function getLikedOrFollowedEvents(userId, actionType) {
             }
         });
     }
+    else{
+        throw applicationException.new(applicationException.NOT_FOUND, 'Action type is not valid.');
+    }
+}
+
+// Function to count the number of object IDs in the `followedEvents` array
+async function countFollowedEvents(userId) {
+    const user = await UserModel.findOne({ _id: userId });
+    if (user) {
+        return user.followedEvents.length;
+    }
+    return 0;
+}
+
+// Function to count the number of object IDs in the `likedEvents` array
+async function countLikedEvents(userId) {
+    const user = await UserModel.findOne({ _id: userId });
+    if (user) {
+        return user.likedEvents.length;
+    }
+    return 0;
 }
 
 export default {
@@ -296,6 +276,8 @@ export default {
     getCart: getCart,
     likeOrFollowEvent: likeOrFollowEvent,
     getLikedOrFollowedEvents: getLikedOrFollowedEvents,
+    countFollowedEvents: countFollowedEvents,
+    countLikedEvents: countLikedEvents,
 
     userRole: userRole,
     model: UserModel

@@ -30,7 +30,7 @@ const ticketEndpoint = (router) => {
         }
     });
 
-    // Returns artists objects that participate in given event
+    // Returns tickets objects that participate in given event
     router.get('/api/events/:id/tickets', async (request, response, next) => {
         try {
             const eventId = request.params.id;

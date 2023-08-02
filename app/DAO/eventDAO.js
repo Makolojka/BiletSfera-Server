@@ -84,10 +84,11 @@ async function createNewOrUpdate(data) {
 }
 
 // Followers and Likes
+// TODO: zabezpieczyć przed innymi akcjami
 async function addLikeOrFollower(eventId, userId, actionType) {
     try {
         const event = await EventModel.findOne({ _id: eventId });
-        if(actionType && actionType=='like'){
+        if(actionType && actionType==='like'){
             const checkLikes = await EventModel.findOne({ _id: eventId, likes: userId});
             if (event) {
                 if(!checkLikes)
@@ -156,12 +157,31 @@ async function getLikesOrFollowersCount(eventId, actionType, res) {
     }
 }
 
+async function incrementEventViews(eventId) {
+    try {
+        const event = await EventModel.findOne({ _id: eventId });
+        if (event) {
+            // Increment the views property by 1
+            const updatedEvent = await EventModel.updateOne(
+                { _id: eventId },
+                { $inc: { views: 1 } }
+            );
+            return updatedEvent;
+        } else {
+            throw new Error('Event not found');
+        }
+    } catch (error) {
+        throw error;
+    }
+}
+
 export default {
     query: query,
     get: get,
     createNewOrUpdate: createNewOrUpdate,
     getLikesOrFollowersCount: getLikesOrFollowersCount,
     addLikeOrFollower: addLikeOrFollower,
+    incrementEventViews: incrementEventViews,
 
     model: EventModel
 };

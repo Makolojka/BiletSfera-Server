@@ -31,11 +31,11 @@ const eventEndpoint = (router) => {
     });
     // TODO: Lepiej przesyłać przez parametry czy przez body?
     // Get Likes or followers
-    router.post('/api/event/likes-follows/:userId/:actionType', async (request, response, next) => {
+    router.post('/api/event/likes-follows/:eventId/:userId/:actionType', async (request, response, next) => {
         try {
+            const eventId = request.params.eventId;
             const userId = request.params.userId;
             const actionType = request.params.actionType;
-            const eventId = request.body.eventId;
             let result = await eventDAO.addLikeOrFollower(eventId, userId, actionType);
 
             response.status(200).send(result);
@@ -44,7 +44,7 @@ const eventEndpoint = (router) => {
         }
     });
 
-    router.get('/api/event/:eventId/follow-likes/:actionType', async (request, response, next) => {
+    router.get('/api/event/likes-follows/:eventId/:actionType', async (request, response, next) => {
         try {
             const eventId = request.params.eventId;
             const actionType = request.params.actionType;
@@ -54,6 +54,23 @@ const eventEndpoint = (router) => {
         } catch (error) {
             // Handle errors and send an error response
             response.status(500).json({ error: error.message });
+        }
+    });
+
+    // TODO: zmienić, żeby zapisywało unikalnych użytkowników, którzy kliknęli event
+    //Update views for an event
+    router.post('/api/event/views/:eventId', async (request, response) => {
+        try {
+            const eventId = request.params.eventId;
+            const result = await eventDAO.incrementEventViews(eventId);
+
+            if (!result) {
+                return response.status(404).json({ error: 'Event not found' });
+            }
+
+            response.status(200).json({ message: 'Event views incremented successfully' });
+        } catch (error) {
+            response.status(500).json({ error: 'Internal server error' });
         }
     });
 
