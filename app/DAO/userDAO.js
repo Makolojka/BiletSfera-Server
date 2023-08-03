@@ -31,7 +31,9 @@ const userSchema = new mongoose.Schema({
                 }
             ]
         }
-    ]
+    ],
+    likedEvents: {type: [mongoose.Schema.Types.ObjectId]},
+    followedEvents: {type: [mongoose.Schema.Types.ObjectId]}
 }, {
     collection: 'user'
 });
@@ -155,30 +157,6 @@ async function removeFromCart(userId, eventId, ticketId, quantity) {
         throw error;
     }
 }
-
-// async function getCart(userId) {
-//     try {
-//         const user = await UserModel.findOne({ _id: userId }).populate('cart.event cart.tickets.ticket');
-//         if (!user) {
-//             throw applicationException.new(applicationException.NOT_FOUND, 'User not found');
-//         }
-//
-//         // Populate the cart items with event and ticket details
-//         const populatedCart = user.cart.map(item => {
-//             const populatedEvent = item.event;
-//             const populatedTickets = item.tickets.map(ticket => ticket.ticket);
-//             return {
-//                 event: populatedEvent,
-//                 tickets: populatedTickets,
-//             };
-//         });
-//
-//         return populatedCart;
-//     } catch (error) {
-//         throw error;
-//     }
-// }
-
 async function getCart(userId) {
     try {
         const user = await UserModel.findOne({ _id: userId }).populate('cart.event cart.tickets.ticket');
@@ -206,6 +184,88 @@ async function getCart(userId) {
     }
 }
 
+
+//Likes and follows
+// TODO: do poprawy kod, rozwiązanie tymczasowe
+async function likeOrFollowEvent(userId, eventId, actionType) {
+    try {
+        console.log("userId server:"+userId);
+        const user = await UserModel.findOne({ _id: userId });
+        console.log("user server:"+user);
+        const checkLikes = await UserModel.findOne({ _id: userId, [actionType]: eventId});
+        if (user) {
+            if(!checkLikes)
+            {
+                //If event is not liked, like it
+                return UserModel.updateOne({ _id : userId }, {$push: {[actionType]: eventId}}, {new: true})
+            }
+            else
+            {
+                //If event is liked, dislike it
+                return UserModel.updateOne({ _id : userId }, {$pull: {[actionType]: eventId}})
+            }
+        } else {
+            throw applicationException.new(applicationException.NOT_FOUND, 'User not found');
+        }
+
+    } catch (error) {
+        throw error;
+    }
+}
+
+async function getLikedOrFollowedEvents(userId, actionType) {
+    let user;
+    //Find user
+    await UserModel.findOne({ _id: userId}).then(function (result) {
+        if (result) {
+            user = result.toObject();
+            // console.log("user likedrecipes: "+user.likedEvents);
+        }
+    });
+    if(!user){
+        console.log("!user");
+        return EventModel.model;
+    }
+    //Find recipe of given likedRecipes id
+    if(actionType && actionType==='like'){
+        return EventModel.model.find({_id:user.likedEvents}).then(function (result) {
+        if (result) {
+            console.log("result: "+result);
+            return mongoConverter(result);
+        }
+    });
+    } else if(actionType && actionType==='follow')
+    {
+        return EventModel.model.find({_id:user.followedEvents}).then(function (result) {
+            if (result) {
+                console.log("result: "+result);
+                return mongoConverter(result);
+            }
+        });
+    }
+    else{
+        throw applicationException.new(applicationException.NOT_FOUND, 'Action type is not valid.');
+    }
+}
+
+// Function to count the number of object IDs in the `followedEvents` array
+async function countFollowedEvents(userId) {
+    const user = await UserModel.findOne({ _id: userId });
+    if (user) {
+        return user.followedEvents.length;
+    }
+    return 0;
+}
+
+// Function to count the number of object IDs in the `likedEvents` array
+async function countLikedEvents(userId) {
+    const user = await UserModel.findOne({ _id: userId });
+    if (user) {
+        return user.likedEvents.length;
+    }
+    return 0;
+}
+
 export default {
     createNewOrUpdate: createNewOrUpdate,
     getByEmailOrName: getByEmailOrName,
@@ -214,6 +274,10 @@ export default {
     addToCart: addToCart,
     removeFromCart: removeFromCart,
     getCart: getCart,
+    likeOrFollowEvent: likeOrFollowEvent,
+    getLikedOrFollowedEvents: getLikedOrFollowedEvents,
+    countFollowedEvents: countFollowedEvents,
+    countLikedEvents: countLikedEvents,
 
     userRole: userRole,
     model: UserModel
