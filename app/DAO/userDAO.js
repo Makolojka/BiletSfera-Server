@@ -266,6 +266,15 @@ async function countLikedEvents(userId) {
     return 0;
 }
 
+async function checkIfEventIsLiked(userId, eventId, actionType) {
+    try {
+        const checkLikes = await UserModel.findOne({ _id: userId, [actionType]: eventId });
+        return !!checkLikes;
+    } catch (error) {
+        throw error;
+    }
+}
+
 export default {
     createNewOrUpdate: createNewOrUpdate,
     getByEmailOrName: getByEmailOrName,
@@ -278,6 +287,7 @@ export default {
     getLikedOrFollowedEvents: getLikedOrFollowedEvents,
     countFollowedEvents: countFollowedEvents,
     countLikedEvents: countLikedEvents,
+    checkIfEventIsLiked: checkIfEventIsLiked,
 
     userRole: userRole,
     model: UserModel

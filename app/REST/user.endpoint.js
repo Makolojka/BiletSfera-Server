@@ -137,5 +137,19 @@ const userEndpoint = (router) => {
         }
     });
 
+
+    router.post('/api/profile/check-if-event-liked/:userId/:eventId/:actionType', async (request, response, next) => {
+        try {
+            const userId = request.params.userId;
+            const eventId = request.params.eventId;
+            const actionType = request.params.actionType;
+            let result = await userDAO.checkIfEventIsLiked(userId, eventId, actionType);
+
+            response.status(200).send({ isLiked: result });
+        } catch (error) {
+            applicationException.errorHandler(error, response);
+        }
+    });
+
 };
 export default userEndpoint;
