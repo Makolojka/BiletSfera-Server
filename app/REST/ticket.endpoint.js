@@ -4,6 +4,29 @@ import artistDAO from "../DAO/artistDAO";
 import ticketDAO from "../DAO/ticketDAO";
 
 const ticketEndpoint = (router) => {
+    /**
+     * @swagger
+     * tags:
+     *   name: Tickets
+     *   description: API for managing tickets.
+     */
+
+    /**
+     * @swagger
+     * /api/tickets:
+     *   get:
+     *     summary: Get all tickets
+     *     tags: [Tickets]
+     *     responses:
+     *       '200':
+     *         description: A list of tickets
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/Ticket'
+     */
     // Get all tickets
     router.get('/api/tickets', async (request, response, next) => {
         try {
@@ -14,12 +37,53 @@ const ticketEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/events/tickets/{id}:
+     *   get:
+     *     summary: Get a single ticket by ID
+     *     tags: [Tickets]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the ticket to get
+     *     responses:
+     *       '200':
+     *         description: The ticket details
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Ticket'
+     */
     //Get a single ticket
     router.get('/api/events/tickets/:id', async (request, response, next) => {
         let result = await business.getTicketManager().query();
         response.status(200).send(result.find(obj => obj.id === request.params.id));
     });
 
+    /**
+     * @swagger
+     * /api/events/ticket:
+     *   post:
+     *     summary: Create a new ticket
+     *     tags: [Tickets]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/Ticket'
+     *     responses:
+     *       '200':
+     *         description: The created ticket
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Ticket'
+     */
     // Create a single ticket
     router.post('/api/events/ticket', async (request, response, next) => {
         try {
@@ -30,6 +94,29 @@ const ticketEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/events/{id}/tickets:
+     *   get:
+     *     summary: Get tickets for a specific event
+     *     tags: [Tickets]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the event to get tickets for
+     *     responses:
+     *       '200':
+     *         description: A list of tickets for the event
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/Ticket'
+     */
     // Returns tickets objects that participate in given event
     router.get('/api/events/:id/tickets', async (request, response, next) => {
         try {

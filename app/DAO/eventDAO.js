@@ -5,15 +5,6 @@ import * as _ from "lodash";
 import {ObjectId} from "mongodb";
 import applicationException from "../service/applicationException";
 
-// //TODO: przerobić ticket na kolekcję
-// const ticketSchema = new mongoose.Schema({
-//     type: { type: String },
-//     price: { type: Number },
-//     dayOfWeek: { type: String },
-//     date: { type: String },
-// });
-// const TicketModel = mongoose.model('tickets', ticketSchema);
-
 const eventSchema = new mongoose.Schema({
     // Basic event info
     title: {type: String},
