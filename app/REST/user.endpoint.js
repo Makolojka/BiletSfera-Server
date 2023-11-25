@@ -58,6 +58,7 @@ const userEndpoint = (router) => {
      * /api/user/create:
      *   post:
      *     summary: Create a new user
+     *     description: Endpoint to register a new user in the system.
      *     tags: [Users]
      *     requestBody:
      *       required: true
@@ -65,6 +66,10 @@ const userEndpoint = (router) => {
      *         application/json:
      *           schema:
      *             $ref: '#/components/schemas/User'
+     *           example:
+     *             email: user@example.com
+     *             password: pass@123
+     *             // Add more fields with descriptions or examples
      *     responses:
      *       '200':
      *         description: The created user
@@ -72,12 +77,36 @@ const userEndpoint = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/User'
+     *             example:
+     *               id: 12345
+     *               email: user@example.com
+     *               // Other user fields
+     *       '400':
+     *         description: Bad Request
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 error:
+     *                   type: string
+     *                   description: Reason for the bad request
+     *             example:
+     *               error: Password does not meet the strength criteria.
      */
     // Create user
     router.post('/api/user/create', async (request, response, next) => {
         try {
+            // Validate the password using the regex
+            const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,15}$/;
+            if (!strongRegex.test(request.body.password)) {
+                response.status(400).json({ error: 'Password does not meet the strength criteria.' });
+                return;
+            }
+
+            // Proceed with user creation if the password is strong
             const result = await business.getUserManager(request).createNewOrUpdate(request.body);
-            response.status(200).send(result);
+            response.status(200).json(result);
         } catch (error) {
             applicationException.errorHandler(error, response);
         }

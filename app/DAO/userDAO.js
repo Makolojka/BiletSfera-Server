@@ -186,7 +186,6 @@ async function getCart(userId) {
 
 
 //Likes and follows
-// TODO: do poprawy kod, rozwiązanie tymczasowe
 async function likeOrFollowEvent(userId, eventId, actionType) {
     try {
         console.log("userId server:"+userId);
@@ -213,20 +212,21 @@ async function likeOrFollowEvent(userId, eventId, actionType) {
     }
 }
 
+//Gets liked or followed
 async function getLikedOrFollowedEvents(userId, actionType) {
     let user;
     //Find user
     await UserModel.findOne({ _id: userId}).then(function (result) {
         if (result) {
             user = result.toObject();
-            // console.log("user likedrecipes: "+user.likedEvents);
+            // console.log("user likedEvents: "+user.likedEvents);
         }
     });
     if(!user){
         console.log("!user");
         return EventModel.model;
     }
-    //Find recipe of given likedRecipes id
+    //Find event of given likedEvents id
     if(actionType && actionType==='like'){
         return EventModel.model.find({_id:user.likedEvents}).then(function (result) {
         if (result) {
@@ -248,7 +248,7 @@ async function getLikedOrFollowedEvents(userId, actionType) {
     }
 }
 
-// Function to count the number of object IDs in the `followedEvents` array
+// Counts the number of object IDs in the `followedEvents` array
 async function countFollowedEvents(userId) {
     const user = await UserModel.findOne({ _id: userId });
     if (user) {
@@ -257,7 +257,7 @@ async function countFollowedEvents(userId) {
     return 0;
 }
 
-// Function to count the number of object IDs in the `likedEvents` array
+// Counts the number of object IDs in the `likedEvents` array
 async function countLikedEvents(userId) {
     const user = await UserModel.findOne({ _id: userId });
     if (user) {
@@ -266,6 +266,7 @@ async function countLikedEvents(userId) {
     return 0;
 }
 
+// Checks if event is already liked by user
 async function checkIfEventIsLiked(userId, eventId, actionType) {
     try {
         const checkLikes = await UserModel.findOne({ _id: userId, [actionType]: eventId });
