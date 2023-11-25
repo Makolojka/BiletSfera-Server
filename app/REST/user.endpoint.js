@@ -5,6 +5,45 @@ import auth from '../middleware/auth';
 import userDAO from "../DAO/userDAO";
 import eventDAO from "../DAO/eventDAO";
 const userEndpoint = (router) => {
+    /**
+     * @swagger
+     * tags:
+     *   name: Users
+     *   description: API for managing users.
+     */
+
+    /**
+     * @swagger
+     * /api/user/auth:
+     *   post:
+     *     summary: Authenticate a user
+     *     tags: [Users]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               login:
+     *                 type: string
+     *               password:
+     *                 type: string
+     *             required:
+     *               - login
+     *               - password
+     *     responses:
+     *       '200':
+     *         description: Authentication successful
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 token:
+     *                   type: string
+     */
+    //Authenticate user
     router.post('/api/user/auth', async (request, response, next) => {
         try {
             let result = await business.getUserManager(request).authenticate(request.body.login, request.body.password);
@@ -14,6 +53,27 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/user/create:
+     *   post:
+     *     summary: Create a new user
+     *     tags: [Users]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/User'
+     *     responses:
+     *       '200':
+     *         description: The created user
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/User'
+     */
+    // Create user
     router.post('/api/user/create', async (request, response, next) => {
         try {
             const result = await business.getUserManager(request).createNewOrUpdate(request.body);
@@ -23,6 +83,31 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/user/logout/{userId}:
+     *   delete:
+     *     summary: Logout a user
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the user to logout
+     *     responses:
+     *       '200':
+     *         description: Logout successful
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     */
+    // Logout user
     router.delete('/api/user/logout/:userId', auth, async (request, response, next) => {
         try {
             let result = await business.getUserManager(request).removeHashSession(request.body.userId);
@@ -32,6 +117,55 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/user/{userId}/cart/add-ticket/{eventId}/{ticketId}:
+     *   post:
+     *     summary: Add ticket(s) to user's cart
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the user
+     *       - in: path
+     *         name: eventId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the event
+     *       - in: path
+     *         name: ticketId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the ticket
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               quantity:
+     *                 type: number
+     *             required:
+     *               - quantity
+     *     responses:
+     *       '200':
+     *         description: Ticket(s) added to cart successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                 user:
+     *                   $ref: '#/components/schemas/User'
+     */
     //Cart
     // Add ticket(s) to cart
     router.post('/api/user/:userId/cart/add-ticket/:eventId/:ticketId', auth, async (req, res) => {
@@ -54,6 +188,55 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/user/{userId}/cart/remove-ticket/{eventId}/{ticketId}:
+     *   post:
+     *     summary: Remove ticket(s) from user's cart
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the user
+     *       - in: path
+     *         name: eventId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the event
+     *       - in: path
+     *         name: ticketId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the ticket
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               quantity:
+     *                 type: number
+     *             required:
+     *               - quantity
+     *     responses:
+     *       '200':
+     *         description: Ticket(s) removed from cart successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                 user:
+     *                   $ref: '#/components/schemas/User'
+     */
     // Remove ticket(s) from cart
     router.post('/api/user/:userId/cart/remove-ticket/:eventId/:ticketId', auth, async (req, res) => {
         const { userId, eventId, ticketId } = req.params;
@@ -75,7 +258,34 @@ const userEndpoint = (router) => {
         }
     });
 
-
+    /**
+     * @swagger
+     * /api/user/{userId}/cart:
+     *   get:
+     *     summary: Get user's cart
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the user
+     *     responses:
+     *       '200':
+     *         description: User's cart retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                 cart:
+     *                   type: array
+     *                   items:
+     *                     $ref: '#/components/schemas/User'
+     */
     // Get user's cart
     router.get('/api/user/:userId/cart', auth, async (req, res) => {
         const { userId } = req.params;
@@ -88,6 +298,44 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/profile/like-follow/{userId}/{eventId}/{actionType}:
+     *   post:
+     *     summary: Like or follow an event
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the user
+     *       - in: path
+     *         name: eventId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the event
+     *       - in: path
+     *         name: actionType
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: Type of action (like/follow)
+     *     responses:
+     *       '200':
+     *         description: Like or follow action successful
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                 message:
+     *                   type: string
+     */
     // TODO: dodać auth
     //Likes and follows
     router.post('/api/profile/like-follow/:userId/:eventId/:actionType', async (request, response, next) => {
@@ -103,6 +351,36 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/profile/likes-follows/{userId}/{actionType}:
+     *   get:
+     *     summary: Get liked or followed events by user
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the user
+     *       - in: path
+     *         name: actionType
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: Type of action (like/follow)
+     *     responses:
+     *       '200':
+     *         description: List of liked or followed events
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/Event'
+     */
+
     router.get('/api/profile/likes-follows/:userId/:actionType', async (request, response, next) => {
         try {
             const userId = request.params.userId;
@@ -114,6 +392,32 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/profile/likes-follows/{userId}:
+     *   get:
+     *     summary: Get counts of liked and followed events by user
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the user
+     *     responses:
+     *       '200':
+     *         description: Counts of liked and followed events
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 followedEventsCount:
+     *                   type: integer
+     *                 likedEventsCount:
+     *                   type: integer
+     */
     // Get the count of followed and liked events
     router.get('/api/profile/likes-follows/:userId', async (request, response, next) => {
         try {
@@ -137,7 +441,43 @@ const userEndpoint = (router) => {
         }
     });
 
-
+    /**
+     * @swagger
+     * /api/profile/check-if-event-liked/{userId}/{eventId}/{actionType}:
+     *   post:
+     *     summary: Check if user liked or followed an event
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the user
+     *       - in: path
+     *         name: eventId
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID of the event
+     *       - in: path
+     *         name: actionType
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: Type of action (like/follow)
+     *     responses:
+     *       '200':
+     *         description: Information if user liked or followed the event
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isLiked:
+     *                   type: boolean
+     */
+    // Check if user liked or followed an event
     router.post('/api/profile/check-if-event-liked/:userId/:eventId/:actionType', async (request, response, next) => {
         try {
             const userId = request.params.userId;

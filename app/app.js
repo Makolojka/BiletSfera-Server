@@ -6,6 +6,9 @@ import mongoose from 'mongoose';
 import morgan from 'morgan';
 import routes from './REST/routes';
 
+const swaggerUi = require('swagger-ui-express');
+const specs = require('./utils/swaggerConfig');
+
 const app = express();
 app.use(express.static(__dirname + '/public'));
 
@@ -16,6 +19,8 @@ app.use(bodyParser.json({limit: '2048kb'}));
 app.use(express.static('public'));
 
 app.use(cors());
+
+// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 mongoose.connect(config.databaseUrl, {
     useNewUrlParser: true,
@@ -40,6 +45,7 @@ process.on('SIGINT', () => {
 
 
 routes(app);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 app.get('/*', function (req, res) {
     res.sendFile(__dirname + '/public/index.html');
@@ -48,3 +54,7 @@ app.get('/*', function (req, res) {
 app.listen(config.port, function () {
     console.info(`Server is running at ${config.port}`)
 });
+
+
+
+
