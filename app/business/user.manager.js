@@ -22,6 +22,21 @@ function create(context) {
         return getToken(token);
     }
 
+    async function authenticateOrganizer(name, password) {
+        let userData;
+        const organizer = await UserDAO.getByEmailOrName(name);
+        console.log(organizer);
+        if (!organizer || !organizer.isOrganizer) {
+            throw applicationException.new(applicationException.UNAUTHORIZED, 'Organizer with that email does not exist');
+        }
+
+        userData = await organizer;
+        await PasswordDAO.authorize(organizer.id, hashString(password));
+
+        const token = await TokenDAO.create(userData);
+        return getToken(token);
+    }
+
     function getToken(token) {
         return {token: token.value};
     }
@@ -41,6 +56,7 @@ function create(context) {
 
     return {
         authenticate: authenticate,
+        authenticateOrganizer: authenticateOrganizer,
         createNewOrUpdate: createNewOrUpdate,
         removeHashSession: removeHashSession
     };

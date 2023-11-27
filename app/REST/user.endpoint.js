@@ -55,6 +55,47 @@ const userEndpoint = (router) => {
 
     /**
      * @swagger
+     * /api/user/auth:
+     *   post:
+     *     summary: Authenticate a user
+     *     tags: [Users]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               login:
+     *                 type: string
+     *               password:
+     *                 type: string
+     *             required:
+     *               - login
+     *               - password
+     *     responses:
+     *       '200':
+     *         description: Authentication successful
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 token:
+     *                   type: string
+     */
+    //Authenticate organiser
+    router.post('/api/organizer/auth', async (request, response, next) => {
+        try {
+            let result = await business.getUserManager(request).authenticateOrganizer(request.body.login, request.body.password);
+            response.status(200).send(result);
+        } catch (error) {
+            applicationException.errorHandler(error, response);
+        }
+    });
+
+    /**
+     * @swagger
      * /api/user/create:
      *   post:
      *     summary: Create a new user
@@ -69,7 +110,6 @@ const userEndpoint = (router) => {
      *           example:
      *             email: user@example.com
      *             password: pass@123
-     *             // Add more fields with descriptions or examples
      *     responses:
      *       '200':
      *         description: The created user
@@ -80,7 +120,6 @@ const userEndpoint = (router) => {
      *             example:
      *               id: 12345
      *               email: user@example.com
-     *               // Other user fields
      *       '400':
      *         description: Bad Request
      *         content:
