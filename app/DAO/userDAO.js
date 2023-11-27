@@ -8,19 +8,20 @@ import uniqueValidator from 'mongoose-unique-validator';
 
 import EventModel from './eventDAO'
 
-const userRole = {
-    admin: 'admin',
-    user: 'user'
+export const userRole = {
+    user: 'user',
+    organizer: 'organizer'
 };
 
-const userRoles = [userRole.admin, userRole.user];
+export const userRoles = [userRole.user, userRole.organizer];
 
 const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     name: { type: String, required: true, unique: true },
-    role: { type: String, enum: userRoles, default: userRole.admin, required: false },
+    role: { type: String, enum: userRoles, default: userRole.user, required: false },
     active: { type: Boolean, default: true, required: false },
-    isAdmin: { type: Boolean, default: false, required: false },
+    isOrganizer: { type: Boolean, default: false, required: false },
+    // Default user
     cart: [
         {
             event: { type: mongoose.Schema.Types.ObjectId, ref: 'events', required: true },
@@ -33,7 +34,10 @@ const userSchema = new mongoose.Schema({
         }
     ],
     likedEvents: {type: [mongoose.Schema.Types.ObjectId]},
-    followedEvents: {type: [mongoose.Schema.Types.ObjectId]}
+    followedEvents: {type: [mongoose.Schema.Types.ObjectId]},
+
+    // Organizer
+    ownedEvents: {event: { type: mongoose.Schema.Types.ObjectId, ref: 'events', required: false }},
 }, {
     collection: 'user'
 });

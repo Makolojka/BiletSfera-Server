@@ -1,6 +1,6 @@
 import business from '../business/business.container';
 import applicationException from '../service/applicationException';
-import admin from '../middleware/admin';
+import organizer from '../middleware/organizer';
 import auth from '../middleware/auth';
 import userDAO from "../DAO/userDAO";
 import eventDAO from "../DAO/eventDAO";
