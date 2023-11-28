@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema({
     followedEvents: {type: [mongoose.Schema.Types.ObjectId]},
 
     // Organizer
-    ownedEvents: {event: { type: mongoose.Schema.Types.ObjectId, ref: 'events', required: false }},
+    ownedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'events', required: false }],
 }, {
     collection: 'user'
 });
@@ -280,6 +280,34 @@ async function checkIfEventIsLiked(userId, eventId, actionType) {
     }
 }
 
+// Gets ownedEvents of given organiser
+async function getOwnedEvents(userId) {
+    try {
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+        return user.ownedEvents;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Adds new event to ownedEvents of given organiser
+async function addEventToOwnedEvents(userId, eventId) {
+    try {
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        user.ownedEvents.push(eventId);
+        await user.save();
+    } catch (error) {
+        throw error;
+    }
+}
+
 export default {
     createNewOrUpdate: createNewOrUpdate,
     getByEmailOrName: getByEmailOrName,
@@ -293,6 +321,8 @@ export default {
     countFollowedEvents: countFollowedEvents,
     countLikedEvents: countLikedEvents,
     checkIfEventIsLiked: checkIfEventIsLiked,
+    getOwnedEvents: getOwnedEvents,
+    addEventToOwnedEvents: addEventToOwnedEvents,
 
     userRole: userRole,
     model: UserModel

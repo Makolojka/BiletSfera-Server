@@ -559,5 +559,33 @@ const userEndpoint = (router) => {
         }
     });
 
+
+    // Organisers endpoints
+    // TODO: przenieść do osobnego DAO
+
+    // Get organiser ownedEvents
+    router.get('/api/organizer/:userId', auth, async (req, res) => {
+        const { userId } = req.params;
+
+        try {
+            const ownedEvents = await userDAO.getOwnedEvents(userId);
+            res.status(200).json({ ownedEvents });
+        } catch (error) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    // Add event to organizer's ownedEvents
+    router.post('/api/organizer/:userId/add-event/:eventId', auth, async (req, res) => {
+        const { userId, eventId } = req.params;
+
+        try {
+            await userDAO.addEventToOwnedEvents(userId, eventId);
+            res.status(200).json({ message: 'Event added to organizer\'s ownedEvents successfully.' });
+        } catch (error) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
 };
 export default userEndpoint;
