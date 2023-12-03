@@ -4,6 +4,7 @@ import eventEndpoint from './event.endpoint';
 import artistEndpoint from './artist.endpoint';
 import ticketEndpoint from './ticket.endpoint';
 import transactionEndpoint from './transaction.endpoint';
+import organiserStatsEndpoint from './organiserStats.endpoint';
 
 const routes = function (router) {
     userEndpoint(router);
@@ -12,6 +13,7 @@ const routes = function (router) {
     artistEndpoint(router);
     ticketEndpoint(router);
     transactionEndpoint(router);
+    organiserStatsEndpoint(router);
 };
 
 export default routes;

@@ -93,5 +93,17 @@ const transactionEndpoint = (router) => {
             console.log(error);
         }
     });
+
+    // Returns sold tickets for specific event
+    router.get('/api/organiser/stats/tickets-sold/:eventId', async (req, res) => {
+        const {eventId} = req.params;
+        try {
+            const ticketsSold = await transactionDAO.getTransactionsForEvent(eventId);
+            res.status(200).json({ticketsSold});
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({error: 'Failed to retrieve tickets sold for the event.'});
+        }
+    });
 };
 export default transactionEndpoint;
