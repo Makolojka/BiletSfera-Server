@@ -198,3 +198,27 @@
  *           description: The value of the token.
  */
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Transaction:
+ *       type: object
+ *       properties:
+ *         userId:
+ *           type: string
+ *           description: The ID of the user associated with the transaction.
+ *         tickets:
+ *           type: array
+ *           items:
+ *             type: string
+ *             description: Reference to the ticket IDs involved in the transaction.
+ *         saleDate:
+ *           type: string
+ *           format: date-time
+ *           description: The timestamp when the transaction occurred.
+ *         totalCost:
+ *           type: number
+ *           description: The total cost of the transaction.
+ */
+

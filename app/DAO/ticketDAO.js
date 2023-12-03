@@ -10,6 +10,8 @@ const ticketSchema = new mongoose.Schema({
     price: { type: Number },
     dayOfWeek: { type: String },
     date: { type: String },
+    maxNumberOfTickets: { type: Number },
+    availableTickets: { type: Number },
 });
 const TicketModel = mongoose.model('tickets', ticketSchema);
 

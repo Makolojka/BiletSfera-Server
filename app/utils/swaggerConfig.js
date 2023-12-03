@@ -20,6 +20,7 @@ const options = {
         ,'./app/REST/post.endpoint.js'
         ,'./app/REST/ticket.endpoint.js'
         ,'./app/REST/user.endpoint.js'
+        ,'./app/REST/transaction.endpoint.js'
         ,'./app/utils/swaggerSchemas.js'
     ],
 };
