@@ -95,7 +95,7 @@ const transactionEndpoint = (router) => {
     });
 
     // Returns sold tickets for specific event
-    router.get('/api/organiser/stats/tickets-sold/:eventId', async (req, res) => {
+    router.get('/api/organiser/stats/tickets-sold-by-event/:eventId', async (req, res) => {
         const {eventId} = req.params;
         try {
             const ticketsSold = await transactionDAO.getTransactionsForEvent(eventId);
@@ -118,7 +118,8 @@ const transactionEndpoint = (router) => {
         }
     });
 
-    router.get('/api/organiser/stats/total-earnings/:organiserName', async (req, res) => {
+    // Returns total earnings for a given organiser name
+    router.get('/api/organiser/stats/total-earnings-by-organiser/:organiserName', async (req, res) => {
         const { organiserName } = req.params;
         try {
             const totalEarnings = await transactionDAO.calculateTotalEarningsForOrganiser(organiserName);
@@ -126,6 +127,42 @@ const transactionEndpoint = (router) => {
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Failed to retrieve total earnings for the organizer.' });
+        }
+    });
+
+    // Returns total earnings for a specific event
+    router.get('/api/organiser/stats/total-earnings-by-event/:eventId', async (req, res) => {
+        const { eventId } = req.params;
+        try {
+            const totalEarningsForEvent = await transactionDAO.calculateTotalEarningsForEvent(eventId);
+            res.status(200).json({ totalEarningsForEvent });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to calculate total earnings for the event.' });
+        }
+    });
+
+    // Returns total views earned by all events for given organiser
+    router.get('/api/organiser/stats/total-views-by-organiser/:organiserName', async (req, res) => {
+        const { organiserName } = req.params;
+        try {
+            const totalViews = await transactionDAO.calculateTotalViewsForOrganiser(organiserName);
+            res.status(200).json({ totalViews });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to retrieve total views for the organizer.' });
+        }
+    });
+
+    // Returns sale data for charts for all sales
+    router.get('/api/organiser/sale-data/:organiserName', async (req, res) => {
+        const { organiserName } = req.params;
+        try {
+            const saleData = await transactionDAO.getSaleDataForOrganiser(organiserName);
+            res.status(200).json({ saleData });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to retrieve sale data.' });
         }
     });
 
