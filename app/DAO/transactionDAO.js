@@ -10,7 +10,8 @@ const transactionSchema = new mongoose.Schema({
     tickets: [{
         ticketId: { type: mongoose.Schema.Types.ObjectId, ref: 'tickets' },
         eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'events' },
-        count: { type: Number}
+        count: { type: Number},
+        singleTicketCost: { type: Number }
     }],
     saleDate: { type: Date, default: Date.now },
     totalCost: { type: Number },
@@ -141,12 +142,120 @@ async function countTicketsSoldForOrganiser(organiserName) {
     }
 }
 
+// async function calculateTotalEarningsForOrganiser(organiserName) {
+//     try {
+//         // Step 1: Find events by the organizer's name
+//         const eventsByOrganiser = await EventModel.find({ organiser: organiserName });
+//         console.log("eventsByOrganiser: ",eventsByOrganiser)
+//
+//         // Step 2: Retrieve tickets from events and convert them to ObjectId
+//         const eventTickets = eventsByOrganiser.reduce((tickets, event) => {
+//             return tickets.concat(event.tickets.map(ticketId => ObjectId(ticketId)));
+//         }, []);
+//
+//         console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!eventTickets: ",eventTickets)
+//
+//         // Step 3: Match transactions by tickets
+//         const transactions = await TransactionModel.find({ 'tickets.ticketId': { $in: eventTickets } });
+//         console.log("transactions: ",transactions)
+//
+//         // Step 4: Calculate total earnings for the organizer
+//         let totalEarningsForOrganiser = 0;
+//         transactions.forEach(transaction => {
+//             transaction.tickets.forEach(ticket => {
+//                 totalEarningsForOrganiser += ticket.singleTicketCost * ticket.count;
+//             });
+//         });
+//         console.log("totalEarningsForOrganiser: ",totalEarningsForOrganiser)
+//         return totalEarningsForOrganiser;
+//     } catch (error) {
+//         console.error('Error in calculateTotalEarningsForOrganiser:', error);
+//         throw error;
+//     }
+// }
+// async function calculateTotalEarningsForOrganiser(organiserName) {
+//     try {
+//         // Step 1: Find events by the organizer's name
+//         const eventsByOrganiser = await EventModel.find({ organiser: organiserName });
+//
+//         // Step 2: Retrieve tickets from events and convert them to ObjectId
+//         const eventTickets = eventsByOrganiser.reduce((tickets, event) => {
+//             return tickets.concat(event.tickets.map(ticketId => ObjectId(ticketId)));
+//         }, []);
+//         console.log("eventTickets: ",eventTickets)
+//
+//         // Step 3: Find transactions for tickets linked to events of the organizer
+//         const transactions = await TransactionModel.find({
+//             'tickets.ticketId': { $in: eventTickets }
+//         });
+//         console.log("transactions: ",transactions)
+//
+//         // Step 4: Calculate total earnings for the organizer
+//         let totalEarningsForOrganiser = 0;
+//
+//         transactions.forEach(transaction => {
+//             transaction.tickets.forEach(ticket => {
+//                 console.log("ticket.ticketId in if:",ticket.ticketId)
+//                 console.log("type of ticket.ticketId in if:",typeof ticket.ticketId)
+//                 console.log("type of eventTickets in if:",typeof eventTickets)
+//                 if (eventTickets.includes(String(ticket.ticketId))) {
+//                     totalEarningsForOrganiser += ticket.singleTicketCost * ticket.count;
+//                 }
+//             });
+//         });
+//
+//         return totalEarningsForOrganiser;
+//     } catch (error) {
+//         console.error('Error in calculateTotalEarningsForOrganiser:', error);
+//         throw error;
+//     }
+// }
+
+async function calculateTotalEarningsForOrganiser(organiserName) {
+    try {
+        // Step 1: Find events by the organizer's name
+        const eventsByOrganiser = await EventModel.find({ organiser: organiserName });
+
+        console.log("eventsByOrganiser: ",eventsByOrganiser)
+        // Step 2: Retrieve tickets from events and convert them to ObjectId strings
+        const eventTickets = eventsByOrganiser.reduce((tickets, event) => {
+            return tickets.concat(event.tickets.map(ticketId => String(ticketId)));
+        }, []);
+        console.log("eventTickets: ",eventTickets)
+        // Step 3: Find transactions for tickets linked to events of the organizer
+        const transactions = await TransactionModel.find({
+            'tickets.ticketId': { $in: eventTickets }
+        });
+        console.log("transactions: ",transactions)
+        // Step 4: Calculate total earnings for the organizer
+        let totalEarningsForOrganiser = 0;
+
+        transactions.forEach(transaction => {
+            transaction.tickets.forEach(ticket => {
+                const ticketIdString = String(ticket.ticketId);
+                if (eventTickets.includes(ticketIdString)) {
+                    totalEarningsForOrganiser += ticket.singleTicketCost * ticket.count;
+                }
+            });
+        });
+        console.log("totalEarningsForOrganiser: ",totalEarningsForOrganiser)
+
+        return totalEarningsForOrganiser;
+    } catch (error) {
+        console.error('Error in calculateTotalEarningsForOrganiser:', error);
+        throw error;
+    }
+}
+
+
+
 export default {
     query: query,
     get: get,
     createNewOrUpdate: createNewOrUpdate,
     getTransactionsForEvent: getTransactionsForEvent,
     countTicketsSoldForOrganiser: countTicketsSoldForOrganiser,
+    calculateTotalEarningsForOrganiser: calculateTotalEarningsForOrganiser,
 
     model: TransactionModel
 };

@@ -118,5 +118,17 @@ const transactionEndpoint = (router) => {
         }
     });
 
+    router.get('/api/organiser/stats/total-earnings/:organiserName', async (req, res) => {
+        const { organiserName } = req.params;
+        try {
+            const totalEarnings = await transactionDAO.calculateTotalEarningsForOrganiser(organiserName);
+            res.status(200).json({ totalEarnings });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to retrieve total earnings for the organizer.' });
+        }
+    });
+
+
 };
 export default transactionEndpoint;
