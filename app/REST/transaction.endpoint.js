@@ -105,5 +105,18 @@ const transactionEndpoint = (router) => {
             res.status(500).json({error: 'Failed to retrieve tickets sold for the event.'});
         }
     });
+
+    // Returns sold tickets for specific organizer
+    router.get('/api/organiser/stats/tickets-sold-by-organiser/:organiserName', async (req, res) => {
+        const { organiserName } = req.params;
+        try {
+            const ticketsSold = await transactionDAO.countTicketsSoldForOrganiser(organiserName);
+            res.status(200).json({ ticketsSold });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to retrieve tickets sold for the organizer.' });
+        }
+    });
+
 };
 export default transactionEndpoint;

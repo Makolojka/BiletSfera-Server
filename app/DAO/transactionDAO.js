@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import mongoConverter from '../service/mongoConverter';
 import * as _ from "lodash";
 const ObjectId = mongoose.Types.ObjectId;
+import eventDAO from "../DAO/eventDAO";
+const EventModel = eventDAO.model;
 
 const transactionSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId },
@@ -93,19 +95,58 @@ async function getTransactionsForEvent(eventId) {
     }
 }
 
+async function countTicketsSoldForOrganiser(organiserName) {
+    try {
+        // Step 1: Find events by the organizer
+        // const eventsByOrganiser = await EventModel.find({organiser: organiserName}); find({organiser:/organiserName/})
+        // const eventsByOrganiser = await EventModel.find({"organiser" : {$regex : organiserName}});
+        // console.log("eventsByOrganiser: ")
+        const eventsByOrganiser = await EventModel.find({ organiser: organiserName });
+        // Step 2: Retrieve tickets from events and convert them to ObjectId
+        const eventTickets = eventsByOrganiser.reduce((tickets, event) => {
+            return tickets.concat(event.tickets.map(ticketId => ObjectId(ticketId)));
+        }, []);
 
+        // Step 3: Match transactions by tickets
+        const result = await TransactionModel.aggregate([
+            {
+                $match: {
+                    'tickets.ticketId': { $in: eventTickets } // Match transactions with tickets from the organizer's events
+                }
+            },
+            {
+                $unwind: '$tickets' // Unwind the tickets array
+            },
+            {
+                $match: {
+                    'tickets.ticketId': { $in: eventTickets } // Match again to filter by ticketIds
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalCount: { $sum: '$tickets.count' } // Calculate the total count of tickets
+                }
+            }
+        ]);
 
-
-
-
-
-
+        if (result.length > 0) {
+            return result[0].totalCount; // Return the total count of tickets sold for the organizer
+        } else {
+            return 0; // Return 0 if no matching transactions found for the organizer
+        }
+    } catch (error) {
+        console.error('Error in countTicketsSoldForOrganiser:', error);
+        throw error;
+    }
+}
 
 export default {
     query: query,
     get: get,
     createNewOrUpdate: createNewOrUpdate,
     getTransactionsForEvent: getTransactionsForEvent,
+    countTicketsSoldForOrganiser: countTicketsSoldForOrganiser,
 
     model: TransactionModel
 };
