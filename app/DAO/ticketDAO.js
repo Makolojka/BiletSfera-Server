@@ -10,6 +10,7 @@ const ticketSchema = new mongoose.Schema({
     price: { type: Number },
     dayOfWeek: { type: String },
     date: { type: String },
+    color: { type: String },
     maxNumberOfTickets: { type: Number },
     availableTickets: { type: Number },
 });
@@ -46,10 +47,31 @@ async function createNewOrUpdate(data) {
     });
 }
 
+async function createTicketsAndGetIds(tickets, session) {
+    const ticketIds = [];
+    for (const ticket of tickets) {
+        // Logic to create a single ticket and get its ID
+        const createdTicket = await createTicketAndGetId(ticket, session);
+        ticketIds.push(createdTicket._id);
+    }
+    console.log("ticketIds in createTicketsAndGetIds: ", ticketIds)
+    return ticketIds;
+}
+
+async function createTicketAndGetId(ticket, session) {
+    // Logic to create a single ticket and return its ID
+    const createdTicket = await TicketModel.create([ticket], { session });
+    console.log("createdTicket in createTicketAndGetId: ", createdTicket)
+    return createdTicket[0]._id;
+}
+
 export default {
     query: query,
     get: get,
     createNewOrUpdate: createNewOrUpdate,
+    createTicketsAndGetIds: createTicketsAndGetIds,
+    createTicketAndGetId: createTicketAndGetId,
+
 
     model: TicketModel
 };

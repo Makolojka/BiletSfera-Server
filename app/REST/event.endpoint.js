@@ -2,6 +2,8 @@ import business from '../business/business.container';
 import eventDAO from "../DAO/eventDAO";
 import userDAO from "../DAO/userDAO";
 import applicationException from "../service/applicationException";
+import mongoose from "mongoose";
+import EventDAO from "../DAO/eventDAO";
 
 const eventEndpoint = (router) => {
     /**
@@ -91,6 +93,20 @@ const eventEndpoint = (router) => {
             response.status(200).send(result);
         } catch (error) {
             console.log(error);
+        }
+    });
+
+    // Create a single event using transactions
+    router.post('/events/transaction', async (req, res) => {
+        try {
+            const newEventDetails = req.body;
+            console.log("newEventDetails: ",newEventDetails)
+
+            const createdEvent = await EventDAO.startEventTransaction(newEventDetails);
+
+            res.status(200).json({ message: 'Event and tickets created successfully', event: createdEvent });
+        } catch (error) {
+            res.status(500).json({ message: 'Error creating event and tickets', error: error.message });
         }
     });
 

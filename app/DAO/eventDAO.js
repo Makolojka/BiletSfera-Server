@@ -4,6 +4,7 @@ import mongoConverter from '../service/mongoConverter';
 import * as _ from "lodash";
 import {ObjectId} from "mongodb";
 import applicationException from "../service/applicationException";
+import TicketDAO from "./ticketDAO";
 
 const eventSchema = new mongoose.Schema({
     // Basic event info
@@ -166,6 +167,71 @@ async function incrementEventViews(eventId) {
     }
 }
 
+// Create event using transaction
+// async function startEventTransaction(newEventDetails) {
+//     const session = await mongoose.startSession();
+//     try {
+//         session.startTransaction();
+//
+//         const ticketIds = await TicketDAO.createTicketsAndGetIds(newEventDetails.tickets, session);
+//
+//         // Proceed with event creation using ticketIds
+//         const createdEvent = await TicketDAO.createEvent(newEventDetails, ticketIds, session);
+//
+//         await session.commitTransaction();
+//         session.endSession();
+//
+//         return createdEvent;
+//     } catch (error) {
+//         await session.abortTransaction();
+//         session.endSession();
+//         throw new Error('Transaction aborted: ' + error.message);
+//     }
+// }
+async function createEventWithTickets(newEventDetails, ticketIds, session) {
+    try {
+        newEventDetails.tickets = ticketIds;
+        return Promise.resolve().then(() => {
+            if (!newEventDetails.id) {
+                return new EventModel(newEventDetails).save({session}).then(result => {
+                    if (result[0]) {
+                        return mongoConverter(result[0]);
+                    }
+                });
+            } else {
+                return EventModel.findByIdAndUpdate(newEventDetails.id, _.omit(newEventDetails, 'id'), {new: true, session});
+            }
+        });
+    } catch (error) {
+        throw new Error('Error creating event: ' + error.message);
+    }
+}
+
+async function startEventTransaction(newEventDetails) {
+    let session;
+    try {
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        const ticketIds = await TicketDAO.createTicketsAndGetIds(newEventDetails.tickets, session);
+
+        const createdEvent = await createEventWithTickets(newEventDetails, ticketIds, session);
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return createdEvent;
+    } catch (error) {
+        if (session) {
+            await session.abortTransaction();
+            session.endSession();
+        }
+        throw new Error('Transaction aborted: ' + error.message);
+    }
+}
+
+
+
 export default {
     query: query,
     get: get,
@@ -173,6 +239,7 @@ export default {
     getLikesOrFollowersCount: getLikesOrFollowersCount,
     addLikeOrFollower: addLikeOrFollower,
     incrementEventViews: incrementEventViews,
+    startEventTransaction: startEventTransaction,
 
     model: EventModel
 };
