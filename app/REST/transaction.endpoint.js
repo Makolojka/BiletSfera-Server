@@ -2,6 +2,7 @@ import business from '../business/business.container';
 import eventDAO from "../DAO/eventDAO";
 import artistDAO from "../DAO/artistDAO";
 import transactionDAO from "../DAO/transactionDAO";
+import auth from "../middleware/auth";
 
 const transactionEndpoint = (router) => {
     /**
@@ -85,7 +86,9 @@ const transactionEndpoint = (router) => {
      *               $ref: '#/components/schemas/Transaction'
      */
     // Create a single transaction
-    router.post('/api/transactions/transaction', async (request, response, next) => {
+    router.post('/api/transactions/transaction', auth, async (request, response, next) => {
+        let { body } = request.body;
+        console.log("TRANSACTION body: ", body);
         try {
             let result = await business.getTransactionManager().createNewOrUpdate(request.body);
             response.status(200).send(result);

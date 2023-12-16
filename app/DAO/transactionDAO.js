@@ -38,17 +38,19 @@ async function get(id) {
 }
 
 async function createNewOrUpdate(data) {
-    return Promise.resolve().then(() => {
-        if (!data.id) {
-            return new TransactionModel(data).save().then(result => {
-                if (result[0]) {
-                    return mongoConverter(result[0]);
-                }
-            });
-        } else {
-            return TransactionModel.findByIdAndUpdate(data.id, _.omit(data, 'id'), {new: true});
-        }
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const result = await new TransactionModel(data).save({ session });
+        await session.commitTransaction();
+        session.endSession();
+        return mongoConverter(result);
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        throw error;
+    }
 }
 
 async function getTransactionsForEvent(eventId) {
