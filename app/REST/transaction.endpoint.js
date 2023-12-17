@@ -97,6 +97,19 @@ const transactionEndpoint = (router) => {
         }
     });
 
+    // Get all transactions for a given user
+    router.get('/api/transactions/all/:userId', auth, async (request, response) => {
+        try {
+            const userId = request.params.userId;
+            const transactions = await transactionDAO.getAllTransactionsByUserId(userId);
+
+            response.status(200).json(transactions);
+        } catch (error) {
+            console.error(error);
+            response.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
     // Returns sold tickets for specific event
     router.get('/api/organiser/stats/tickets-sold-by-event/:eventId', async (req, res) => {
         const {eventId} = req.params;

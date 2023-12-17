@@ -4,6 +4,8 @@ import * as _ from "lodash";
 import eventDAO from "../DAO/eventDAO";
 import userDAO from "../DAO/userDAO";
 import ticketDAO from "./ticketDAO";
+import applicationException from "../service/applicationException";
+import UserDAO from "../DAO/userDAO";
 
 const ObjectId = mongoose.Types.ObjectId;
 const EventModel = eventDAO.model;
@@ -37,6 +39,23 @@ async function get(id) {
             return mongoConverter(result);
         }
     });
+}
+
+async function getAllTransactionsByUserId(userId) {
+    try {
+        const user = await UserDAO.model.findOne({ _id: userId });
+        if (!user) {
+            throw applicationException.new(applicationException.NOT_FOUND, 'User not found');
+        }
+
+        const result = await TransactionModel.find({ userId: userId });
+        if (result) {
+            return mongoConverter(result);
+        }
+        return [];
+    } catch (error) {
+        throw error;
+    }
 }
 
 async function createNewOrUpdate(data) {
@@ -292,6 +311,7 @@ export default {
     calculateTotalEarningsForEvent: calculateTotalEarningsForEvent,
     calculateTotalViewsForOrganiser: calculateTotalViewsForOrganiser,
     getSaleDataForOrganiser: getSaleDataForOrganiser,
+    getAllTransactionsByUserId: getAllTransactionsByUserId,
 
     model: TransactionModel
 };
