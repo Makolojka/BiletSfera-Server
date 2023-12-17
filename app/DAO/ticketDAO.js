@@ -3,6 +3,8 @@ import uniqueValidator from 'mongoose-unique-validator';
 import mongoConverter from '../service/mongoConverter';
 import * as _ from "lodash";
 import {ObjectId} from "mongodb";
+import ApplicationException from "../service/applicationException";
+import applicationException from "../service/applicationException";
 
 //TODO: Dodać liczbę dostepnych biletów
 const ticketSchema = new mongoose.Schema({
@@ -65,13 +67,28 @@ async function createTicketAndGetId(ticket, session) {
     return createdTicket[0]._id;
 }
 
+async function decreaseMaxTickets (ticketId, count, session){
+    try {
+        const ticket = await TicketModel.findById(ticketId).session(session);
+        if (!ticket) {
+            throw applicationException.new(applicationException.NOT_FOUND, 'Ticket not found');
+        } else if (ticket.maxNumberOfTickets !== undefined) {
+            ticket.maxNumberOfTickets -= count;
+            await ticket.save();
+        }
+        // If maxNumberOfTickets is undefined, do nothing
+    } catch (error) {
+        throw error;
+    }
+}
+
 export default {
     query: query,
     get: get,
     createNewOrUpdate: createNewOrUpdate,
     createTicketsAndGetIds: createTicketsAndGetIds,
     createTicketAndGetId: createTicketAndGetId,
-
+    decreaseMaxTickets: decreaseMaxTickets,
 
     model: TicketModel
 };

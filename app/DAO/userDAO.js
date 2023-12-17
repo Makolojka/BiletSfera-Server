@@ -188,6 +188,18 @@ async function getCart(userId) {
     }
 }
 
+async function clearUserCart(userId, session) {
+    try {
+        const user = await UserModel.findById(userId).session(session);
+        if (user) {
+            user.cart = [];
+            await user.save();
+        }
+    } catch (error) {
+        throw error;
+    }
+}
+
 
 //Likes and follows
 async function likeOrFollowEvent(userId, eventId, actionType) {
@@ -323,6 +335,7 @@ export default {
     checkIfEventIsLiked: checkIfEventIsLiked,
     getOwnedEvents: getOwnedEvents,
     addEventToOwnedEvents: addEventToOwnedEvents,
+    clearUserCart: clearUserCart,
 
     userRole: userRole,
     model: UserModel

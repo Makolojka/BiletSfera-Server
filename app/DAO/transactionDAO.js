@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import mongoConverter from '../service/mongoConverter';
 import * as _ from "lodash";
 import eventDAO from "../DAO/eventDAO";
+import userDAO from "../DAO/userDAO";
+import ticketDAO from "./ticketDAO";
 
 const ObjectId = mongoose.Types.ObjectId;
 const EventModel = eventDAO.model;
@@ -43,6 +45,12 @@ async function createNewOrUpdate(data) {
 
     try {
         const result = await new TransactionModel(data).save({ session });
+        await userDAO.clearUserCart(data.userId, session);
+        // Decrease maxNumberOfTickets for each purchased ticket
+        for (const ticketData of data.tickets) {
+            await ticketDAO.decreaseMaxTickets(ticketData.ticketId, ticketData.count, session);
+        }
+
         await session.commitTransaction();
         session.endSession();
         return mongoConverter(result);
