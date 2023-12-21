@@ -25,6 +25,23 @@ const eventSchema = new mongoose.Schema({
         ref: 'tickets'
     }],
 
+    // Room schema
+    roomSchema: {
+        roomSchema: [
+            {
+                seats: [
+                    {
+                        id: { type: String },
+                        type: { type: String },
+                        color: { type: String },
+                        isAvailable: { type: Boolean },
+                    },
+                ],
+            },
+        ],
+        roomSchemaStyle: { type: String },
+    },
+
     // Artists array
     artists: [{
         type: mongoose.Schema.Types.ObjectId,
