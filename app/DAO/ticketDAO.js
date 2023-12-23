@@ -15,7 +15,6 @@ const ticketSchema = new mongoose.Schema({
     color: { type: String },
     maxNumberOfTickets: { type: Number },
     availableTickets: { type: Number },
-    seatNumber: { type: String, required: false, default: null }
 });
 const TicketModel = mongoose.model('tickets', ticketSchema);
 

@@ -7,6 +7,7 @@ import mongoConverter from '../service/mongoConverter';
 import uniqueValidator from 'mongoose-unique-validator';
 
 import EventModel from './eventDAO'
+import EventDAO from "../DAO/eventDAO";
 
 export const userRole = {
     user: 'user',
@@ -29,6 +30,7 @@ const userSchema = new mongoose.Schema({
                 {
                     ticket: { type: mongoose.Schema.Types.ObjectId, ref: 'tickets', required: true },
                     quantity: { type: Number, default: 1, required: true },
+                    seatNumbers: { type: String, required: false, default: null }
                 }
             ]
         }
@@ -320,6 +322,45 @@ async function addEventToOwnedEvents(userId, eventId) {
     }
 }
 
+// Reserve seats for specific cinema event
+async function updateIsAvailableForEventSeats(eventId, chosenSeats, session) {
+    try {
+        const event = await EventDAO.model.findById(eventId).session(session);
+        console.log("event: ", event);
+        if (!event) {
+            throw new Error('Event not found');
+        }
+
+        const roomSchema = event.roomSchema.roomSchema;
+        console.log("roomSchema: ", roomSchema);
+
+        console.log("chosenSeats: ", chosenSeats);
+
+        console.log("chosenSeat[0].id: ", chosenSeat[0].id);
+
+        console.log("chosenSeat[0].seat[0].id: ", chosenSeat[0].seat[0].id);
+
+
+        for (const chosenSeat of chosenSeats) {
+            for (const room of roomSchema) {
+                console.log("Chosen Seat ID:", chosenSeat.id);
+                for (const seat of room.seats) {
+                    console.log("Seat ID:", seat.id);
+                    if (seat.id === chosenSeat.id) {
+                        seat.isAvailable = false;
+                        console.log("seat.isAvailable: false for ", seat);
+                        break; // Exit the loop once seat is found
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+
 export default {
     createNewOrUpdate: createNewOrUpdate,
     getByEmailOrName: getByEmailOrName,
@@ -336,6 +377,7 @@ export default {
     getOwnedEvents: getOwnedEvents,
     addEventToOwnedEvents: addEventToOwnedEvents,
     clearUserCart: clearUserCart,
+    updateIsAvailableForEventSeats: updateIsAvailableForEventSeats,
 
     userRole: userRole,
     model: UserModel

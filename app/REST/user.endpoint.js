@@ -4,6 +4,7 @@ import organizer from '../middleware/organizer';
 import auth from '../middleware/auth';
 import userDAO from "../DAO/userDAO";
 import eventDAO from "../DAO/eventDAO";
+import mongoose from "mongoose";
 const userEndpoint = (router) => {
     /**
      * @swagger
@@ -236,25 +237,53 @@ const userEndpoint = (router) => {
      */
     //Cart
     // Add ticket(s) to cart
+    // router.post('/api/user/:userId/cart/add-ticket/:eventId/:ticketId', auth, async (req, res) => {
+    //     const { userId, eventId, ticketId } = req.params;
+    //     let { quantity } = req.body;
+    //
+    //     // If quantity is not provided or is not a valid number, set it to 1
+    //     if (!quantity || isNaN(quantity)) {
+    //         quantity = 1;
+    //     } else {
+    //         // Ensure quantity is an integer
+    //         quantity = parseInt(quantity);
+    //     }
+    //
+    //     try {
+    //         const user = await userDAO.addToCart(userId, eventId, ticketId, quantity);
+    //         res.status(200).json({ success: true, user });
+    //     } catch (error) {
+    //         res.status(500).json({ error: error.message });
+    //     }
+    // });
+    //Cart
+    // Add ticket(s) to cart
     router.post('/api/user/:userId/cart/add-ticket/:eventId/:ticketId', auth, async (req, res) => {
         const { userId, eventId, ticketId } = req.params;
-        let { quantity } = req.body;
+        let { quantity, chosenSeats } = req.body;
 
-        // If quantity is not provided or is not a valid number, set it to 1
-        if (!quantity || isNaN(quantity)) {
-            quantity = 1;
-        } else {
-            // Ensure quantity is an integer
-            quantity = parseInt(quantity);
-        }
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
         try {
-            const user = await userDAO.addToCart(userId, eventId, ticketId, quantity);
+            // Update isAvailable field in roomSchema for chosen seats
+            await userDAO.updateIsAvailableForEventSeats(eventId, chosenSeats, session);
+
+            // Add ticket(s) to cart
+            const user = await userDAO.addToCart(userId, eventId, ticketId, quantity, session);
+
+            await session.commitTransaction();
+            session.endSession();
+
             res.status(200).json({ success: true, user });
         } catch (error) {
+            await session.abortTransaction();
+            session.endSession();
+
             res.status(500).json({ error: error.message });
         }
     });
+
 
     /**
      * @swagger
