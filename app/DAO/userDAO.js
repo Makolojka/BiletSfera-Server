@@ -336,21 +336,15 @@ async function updateIsAvailableForEventSeats(eventId, chosenSeats, session) {
 
         console.log("chosenSeats: ", chosenSeats);
 
-        console.log("chosenSeat[0].id: ", chosenSeat[0].id);
-
-        console.log("chosenSeat[0].seat[0].id: ", chosenSeat[0].seat[0].id);
-
-
         for (const chosenSeat of chosenSeats) {
             for (const room of roomSchema) {
-                console.log("Chosen Seat ID:", chosenSeat.id);
-                for (const seat of room.seats) {
-                    console.log("Seat ID:", seat.id);
-                    if (seat.id === chosenSeat.id) {
-                        seat.isAvailable = false;
-                        console.log("seat.isAvailable: false for ", seat);
-                        break; // Exit the loop once seat is found
-                    }
+                const seat = room.seats.find(seat => seat.id === chosenSeat.id);
+
+                if (seat) {
+                    seat.isAvailable = false;
+                    console.log("Updated seat availability for seat ID: ", seat.id);
+                    await event.save(); // Save changes after updating isAvailable
+                    break; // Exit the loop once seat is found
                 }
             }
         }

@@ -236,29 +236,30 @@ const userEndpoint = (router) => {
      *                   $ref: '#/components/schemas/User'
      */
     //Cart
-    // Add ticket(s) to cart
-    // router.post('/api/user/:userId/cart/add-ticket/:eventId/:ticketId', auth, async (req, res) => {
-    //     const { userId, eventId, ticketId } = req.params;
-    //     let { quantity } = req.body;
-    //
-    //     // If quantity is not provided or is not a valid number, set it to 1
-    //     if (!quantity || isNaN(quantity)) {
-    //         quantity = 1;
-    //     } else {
-    //         // Ensure quantity is an integer
-    //         quantity = parseInt(quantity);
-    //     }
-    //
-    //     try {
-    //         const user = await userDAO.addToCart(userId, eventId, ticketId, quantity);
-    //         res.status(200).json({ success: true, user });
-    //     } catch (error) {
-    //         res.status(500).json({ error: error.message });
-    //     }
-    // });
+    // Add ticket to cart
+    router.post('/api/user/:userId/cart/add-ticket/:eventId/:ticketId', auth, async (req, res) => {
+        const { userId, eventId, ticketId } = req.params;
+        let { quantity } = req.body;
+
+        // If quantity is not provided or is not a valid number, set it to 1
+        if (!quantity || isNaN(quantity)) {
+            quantity = 1;
+        } else {
+            // Ensure quantity is an integer
+            quantity = parseInt(quantity);
+        }
+
+        try {
+            const user = await userDAO.addToCart(userId, eventId, ticketId, quantity);
+            res.status(200).json({ success: true, user });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
     //Cart
     // Add ticket(s) to cart
-    router.post('/api/user/:userId/cart/add-ticket/:eventId/:ticketId', auth, async (req, res) => {
+    router.post('/api/user/:userId/cart/add-tickets/:eventId/:ticketId', auth, async (req, res) => {
         const { userId, eventId, ticketId } = req.params;
         let { quantity, chosenSeats } = req.body;
 
