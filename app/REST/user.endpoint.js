@@ -263,15 +263,17 @@ const userEndpoint = (router) => {
         const { userId, eventId, ticketId } = req.params;
         let { quantity, chosenSeats } = req.body;
 
+        console.log("chosenSeats from body: ",chosenSeats)
+
         const session = await mongoose.startSession();
         session.startTransaction();
 
         try {
             // Update isAvailable field in roomSchema for chosen seats
-            await userDAO.updateIsAvailableForEventSeats(eventId, chosenSeats, session);
+            // await userDAO.updateIsAvailableForEventSeats(eventId, chosenSeats, session);
 
             // Add ticket(s) to cart
-            const user = await userDAO.addToCart(userId, eventId, ticketId, quantity, session);
+            const user = await userDAO.addWithSeatsToCart(userId, eventId, ticketId, quantity, chosenSeats, session);
 
             await session.commitTransaction();
             session.endSession();
@@ -613,7 +615,7 @@ const userEndpoint = (router) => {
             await userDAO.addEventToOwnedEvents(userId, eventId);
             res.status(200).json({ message: 'Event added to organizer\'s ownedEvents successfully.' });
         } catch (error) {
-            res.status(500).json({ error: 'Internal server error' });
+            applicationException.errorHandler(error, res);
         }
     });
 
