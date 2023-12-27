@@ -39,6 +39,21 @@ const eventEndpoint = (router) => {
         }
     });
 
+    // Get top 10 events
+    router.get('/api/events/most-viewed', async (request, response, next) => {
+        try {
+            const topEvents = await EventDAO.model.aggregate([
+                { $sort: { views: -1 } },
+                { $limit: 10 }
+            ]);
+
+            response.status(200).send(topEvents);
+        } catch (error) {
+            console.log(error);
+            response.status(500).send({ error: 'Failed to retrieve top events.' });
+        }
+    });
+
     /**
      * @swagger
      * /api/events/{id}:
