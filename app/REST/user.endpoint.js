@@ -152,6 +152,16 @@ const userEndpoint = (router) => {
         }
     });
 
+    router.post('/api/user/update', async (request, response, next) => {
+        console.log("update body: ", request.body)
+        try {
+            const result = await business.getUserManager(request).createNewOrUpdate(request.body);
+            response.status(200).json(result);
+        } catch (error) {
+            applicationException.errorHandler(error, response);
+        }
+    });
+
     /**
      * @swagger
      * /api/user/logout/{userId}:
@@ -393,6 +403,17 @@ const userEndpoint = (router) => {
         try {
             const cart = await userDAO.getCart(userId);
             res.status(200).json({ success: true, cart });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Get user's preferences
+    router.get('/api/user/:userId/preferences', auth, async (req, res) => {
+        const { userId } = req.params;
+        try {
+            const preferences = await userDAO.getPreferences(userId);
+            res.status(200).json({ success: true, preferences });
         } catch (error) {
             res.status(500).json({ error: error.message });
         }

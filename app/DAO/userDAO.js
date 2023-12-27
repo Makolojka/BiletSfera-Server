@@ -1,4 +1,3 @@
-
 import mongoose from 'mongoose';
 import * as _ from 'lodash';
 import Promise from 'bluebird';
@@ -36,6 +35,13 @@ const userSchema = new mongoose.Schema({
             ]
         }
     ],
+
+    // Preferences
+    preferences: {
+        selectedCategories: [{ type: String }],
+        selectedSubCategories: [{ type: String }]
+    },
+
     likedEvents: {type: [mongoose.Schema.Types.ObjectId]},
     followedEvents: {type: [mongoose.Schema.Types.ObjectId]},
 
@@ -50,6 +56,7 @@ userSchema.plugin(uniqueValidator);
 const UserModel = mongoose.model('user', userSchema);
 
 function createNewOrUpdate(user) {
+    console.log("user.id: ", user.id)
     return Promise.resolve().then(() => {
         if (!user.id) {
             return new  UserModel(user).save().then(result => {
@@ -482,7 +489,19 @@ async function updateIsAvailableForEventSeats(eventId, chosenSeats, session) {
     }
 }
 
+async function getPreferences(userId) {
+    try {
+        const user = await UserModel.findById(userId);
 
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        return user.preferences;
+    } catch (error) {
+        throw new Error(`Failed to fetch preferences: ${error.message}`);
+    }
+}
 
 export default {
     createNewOrUpdate: createNewOrUpdate,
@@ -502,6 +521,7 @@ export default {
     clearUserCart: clearUserCart,
     updateIsAvailableForEventSeats: updateIsAvailableForEventSeats,
     addWithSeatsToCart: addWithSeatsToCart,
+    getPreferences: getPreferences,
 
     userRole: userRole,
     model: UserModel

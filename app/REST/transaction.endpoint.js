@@ -3,6 +3,8 @@ import eventDAO from "../DAO/eventDAO";
 import artistDAO from "../DAO/artistDAO";
 import transactionDAO from "../DAO/transactionDAO";
 import auth from "../middleware/auth";
+import mongoose from "mongoose";
+import EventDAO from "../DAO/eventDAO";
 
 const transactionEndpoint = (router) => {
     /**
@@ -87,15 +89,44 @@ const transactionEndpoint = (router) => {
      */
     // Create a single transaction
     router.post('/api/transactions/transaction', auth, async (request, response, next) => {
-        let { body } = request.body;
-        console.log("TRANSACTION body: ", body);
+        const { userId, tickets } = request.body;
+
         try {
-            let result = await business.getTransactionManager().createNewOrUpdate(request.body);
-            response.status(200).send(result);
+            const session = await mongoose.startSession();
+            session.startTransaction();
+
+            try {
+                // Iterate through each ticket in the request and update seats if required
+                for (const ticket of tickets) {
+                    const { eventId, seatNumbers } = ticket;
+
+                    // Check if seat management is required for the event
+                    const event = await EventDAO.model.findById(eventId).session(session);
+                    const requiresSeatManagement = event.category.includes('Kino');
+                    console.log("requiresSeatManagement: ", requiresSeatManagement)
+
+                    if (requiresSeatManagement) {
+                        await transactionDAO.updateIsAvailableForEventSeats(eventId, seatNumbers, session);
+                    }
+                }
+
+                // Perform the transaction processing here
+                const result = await business.getTransactionManager().createNewOrUpdate(request.body, session);
+                await session.commitTransaction();
+                session.endSession();
+
+                response.status(200).send(result);
+            } catch (error) {
+                await session.abortTransaction();
+                session.endSession();
+                throw error; // Forward the error to the outer catch block
+            }
         } catch (error) {
-            console.log(error);
+            console.error(error);
+            response.status(500).send({ error: 'Server Error' });
         }
     });
+
 
     // Get all transactions for a given user
     router.get('/api/transactions/all/:userId', auth, async (request, response) => {

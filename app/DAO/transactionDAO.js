@@ -16,7 +16,8 @@ const transactionSchema = new mongoose.Schema({
         ticketId: { type: mongoose.Schema.Types.ObjectId, ref: 'tickets' },
         eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'events' },
         count: { type: Number},
-        singleTicketCost: { type: Number }
+        singleTicketCost: { type: Number },
+        seatNumbers: [{ type: String, required: false }]
     }],
     saleDate: { type: Date, default: Date.now },
     totalCost: { type: Number },
@@ -295,6 +296,47 @@ async function getSaleDataForOrganiser(organiserName) {
     }
 }
 
+async function updateIsAvailableForEventSeats(eventId, chosenSeats, session) {
+    try {
+        const event = await EventModel.findById(eventId).session(session);
+
+        if (!event) {
+            throw new Error('Event not found');
+        }
+        const roomSchema = event.roomSchema.roomSchema;
+
+        for (const chosenSeat of chosenSeats) {
+            const parsedSeat = chosenSeat.replace(/\.$/, ''); // Parse the seat string
+            const [frontendRowIndex, frontendColIndex] = parsedSeat.split('.').map(Number); // Split seat ID into row and column
+
+            // Convert frontend indices to backend indices
+            const backendRowIndex = frontendRowIndex - 1;
+            const backendColIndex = frontendColIndex - 1;
+
+            for (const room of roomSchema) {
+                const seat = room.seats.find(seat => {
+                    // Adjust the seat indexing to match the database's indexing
+                    const [dbRowIndex, dbColIndex] = seat.id.split('.').map(Number);
+                    return dbRowIndex === backendRowIndex && dbColIndex === backendColIndex;
+                });
+
+                if (seat) {
+                    seat.isAvailable = false;
+                    break;
+                }
+            }
+        }
+        await event.save();
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+
+
+
+
 
 
 
@@ -312,6 +354,7 @@ export default {
     calculateTotalViewsForOrganiser: calculateTotalViewsForOrganiser,
     getSaleDataForOrganiser: getSaleDataForOrganiser,
     getAllTransactionsByUserId: getAllTransactionsByUserId,
+    updateIsAvailableForEventSeats: updateIsAvailableForEventSeats,
 
     model: TransactionModel
 };

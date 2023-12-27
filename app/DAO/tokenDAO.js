@@ -28,6 +28,7 @@ async function create(user) {
         userId: user.id,
         name: user.name,
         role: user.role,
+        email: user.email,
         isOrganizer: user.isOrganizer,
         access: access
     };
