@@ -5,6 +5,7 @@ import applicationException from "../service/applicationException";
 import mongoose from "mongoose";
 import EventDAO from "../DAO/eventDAO";
 import UserDAO from "../DAO/userDAO";
+import {parseDate} from "../service/dateParserService";
 
 const eventEndpoint = (router) => {
     /**
@@ -33,17 +34,36 @@ const eventEndpoint = (router) => {
     // Get all events
     router.get('/api/events', async (request, response, next) => {
         try {
-            let result = await business.getEventManager().query();
-            response.status(200).send(result);
+            const currentDate = new Date();
+            const allEvents = await business.getEventManager().query();
+
+            const activeEvents = allEvents.filter(event => {
+                const parsedDate = parseDate(event.date);
+
+                return parsedDate >= currentDate;
+            });
+
+            response.status(200).send(activeEvents);
         } catch (error) {
             console.log(error);
+            response.status(500).send({ error: 'Failed to retrieve active events.' });
         }
     });
+    // router.get('/api/events', async (request, response, next) => {
+    //     try {
+    //         let result = await business.getEventManager().query();
+    //         response.status(200).send(result);
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    // });
 
     // Get top 10 events
     router.get('/api/events/most-viewed', async (request, response, next) => {
         try {
+            const currentDate = new Date();
             const topEvents = await EventDAO.model.aggregate([
+                { $match: { date: { $gte: currentDate } } }, // Filter out events with expired dates
                 { $sort: { views: -1 } },
                 { $limit: 10 }
             ]);
@@ -51,7 +71,7 @@ const eventEndpoint = (router) => {
             response.status(200).send(topEvents);
         } catch (error) {
             console.log(error);
-            response.status(500).send({ error: 'Failed to retrieve top events.' });
+            response.status(500).send({ error: 'Failed to retrieve top active events.' });
         }
     });
 
@@ -66,9 +86,12 @@ const eventEndpoint = (router) => {
                 return res.status(404).json({ message: 'User not found' });
             }
 
-            const userPreferences = user.preferences.selectedCategories;
+            const userPreferences = [
+                ...user.preferences.selectedCategories,
+                ...user.preferences.selectedSubCategories
+            ];
 
-            const matchedEvents = await EventDAO.model.aggregate([
+            const allEvents = await EventDAO.model.aggregate([
                 {
                     $match: {
                         $or: [
@@ -79,12 +102,19 @@ const eventEndpoint = (router) => {
                 }
             ]);
 
-            res.status(200).json({ matchedEvents });
+            const currentDate = new Date();
+            const activeEvents = allEvents.filter(event => {
+                const parsedDate = parseDate(event.date);
+                return parsedDate >= currentDate;
+            });
+
+            res.status(200).json({ matchedEvents: activeEvents });
         } catch (error) {
             console.error('Error:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
     });
+
 
 
     /**
