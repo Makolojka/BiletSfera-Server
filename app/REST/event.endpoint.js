@@ -4,6 +4,7 @@ import userDAO from "../DAO/userDAO";
 import applicationException from "../service/applicationException";
 import mongoose from "mongoose";
 import EventDAO from "../DAO/eventDAO";
+import UserDAO from "../DAO/userDAO";
 
 const eventEndpoint = (router) => {
     /**
@@ -53,6 +54,38 @@ const eventEndpoint = (router) => {
             response.status(500).send({ error: 'Failed to retrieve top events.' });
         }
     });
+
+    // Get events based on user preferences
+    router.get('/api/events/preferences/:userId', async (req, res) => {
+        const { userId } = req.params;
+
+        try {
+            const user = await UserDAO.model.findOne({ _id: userId }).select('preferences');
+
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            const userPreferences = user.preferences.selectedCategories;
+
+            const matchedEvents = await EventDAO.model.aggregate([
+                {
+                    $match: {
+                        $or: [
+                            { category: { $in: userPreferences } },
+                            { subCategory: { $in: userPreferences } }
+                        ]
+                    }
+                }
+            ]);
+
+            res.status(200).json({ matchedEvents });
+        } catch (error) {
+            console.error('Error:', error);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    });
+
 
     /**
      * @swagger
