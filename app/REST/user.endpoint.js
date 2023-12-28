@@ -5,6 +5,7 @@ import auth from '../middleware/auth';
 import userDAO from "../DAO/userDAO";
 import eventDAO from "../DAO/eventDAO";
 import mongoose from "mongoose";
+import UserDAO from "../DAO/userDAO";
 const userEndpoint = (router) => {
     /**
      * @swagger
@@ -161,6 +162,47 @@ const userEndpoint = (router) => {
             applicationException.errorHandler(error, response);
         }
     });
+
+
+    router.get('/api/user/preferences/:userId', async (req, res) => {
+        try {
+            const userId = req.params.userId;
+
+            // Find the user by userId and return the oneTimeMonitChecked flag state
+            const user = await UserDAO.model.findOne({ _id: userId });
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            res.status(200).json({ oneTimeMonitChecked: user.preferences.oneTimeMonitChecked });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Server error' });
+        }
+    });
+
+    // Update the oneTimeMonitChecked flag for a user
+    router.put('/api/user/:userId/preferences/onetimemonit', async (req, res) => {
+        const { userId } = req.params;
+
+        try {
+            const user = await UserDAO.model.findById(userId);
+
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            // Toggle the oneTimeMonitChecked flag to true
+            user.preferences.oneTimeMonitChecked = true;
+            await user.save();
+
+            return res.status(200).json({ message: 'oneTimeMonitChecked updated successfully' });
+        } catch (error) {
+            console.error('Error updating oneTimeMonitChecked:', error);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+    });
+
 
     /**
      * @swagger

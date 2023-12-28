@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema({
 
     // Preferences
     preferences: {
+        oneTimeMonitChecked: {type: Boolean, default: false},
         selectedCategories: [{ type: String }],
         selectedSubCategories: [{ type: String }]
     },
