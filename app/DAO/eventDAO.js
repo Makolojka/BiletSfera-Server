@@ -262,7 +262,7 @@ async function startEventTransaction(newEventDetails) {
         const ticketIds = await TicketDAO.createTicketsAndGetIds(newEventDetails.tickets, session);
 
         const createdEvent = await createEventWithTickets(newEventDetails, ticketIds, session);
-        console.log("createdEvent przed addeventto organiser!!!: ",createdEvent)
+
         await addEventToOrganizerOwnedEvents(newEventDetails, createdEvent.id, session);
 
         await session.commitTransaction();

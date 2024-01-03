@@ -140,8 +140,13 @@ const eventEndpoint = (router) => {
      */
     //Get a single event
     router.get('/api/events/:id', async (request, response, next) => {
-        let result = await business.getEventManager().query();
-        response.status(200).send(result.find(obj => obj.id === request.params.id));
+        try{
+            let result = await business.getEventManager().query();
+            response.status(200).send(result.find(obj => obj.id === request.params.id));
+        }catch (error) {
+            console.error('Error:', error);
+            response.status(500).json({ message: 'Internal server error' });
+        }
     });
 
     /**
@@ -268,7 +273,7 @@ const eventEndpoint = (router) => {
      *                 count:
      *                   type: integer
      */
-    // Get likes and followes
+    // Get likes and follows
     router.get('/api/event/likes-follows/:eventId/:actionType', async (request, response, next) => {
         try {
             const eventId = request.params.eventId;
