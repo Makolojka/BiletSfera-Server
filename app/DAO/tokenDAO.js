@@ -26,9 +26,10 @@ async function create(user) {
     const access = 'auth';
     const userData = {
         userId: user.id,
-        name: user.email,
+        name: user.name,
         role: user.role,
-        isAdmin: user.isAdmin,
+        email: user.email,
+        isOrganizer: user.isOrganizer,
         access: access
     };
     const value = jwt.sign(

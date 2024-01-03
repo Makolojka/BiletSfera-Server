@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import config from "../config";
 
-const admin = (req, res, next) => {
+const organizer = (req, res, next) => {
     let token = req.headers['x-access-token'] || req.headers['authorization'];
     if (token.startsWith('Bearer ')) {
         token = token.slice(7, token.length);
@@ -10,7 +10,7 @@ const admin = (req, res, next) => {
 
     try {
         req.user = jwt.verify(token, config.JwtSecret);
-        if (!req.user.isAdmin) {
+        if (!req.user.isOrganizer) {
             return res.status(403).send('Forbidden access.');
         }
         next();
@@ -20,4 +20,4 @@ const admin = (req, res, next) => {
     }
 };
 
-export default admin;
+export default organizer;

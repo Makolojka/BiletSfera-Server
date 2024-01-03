@@ -1,9 +1,11 @@
 import business from '../business/business.container';
 import applicationException from '../service/applicationException';
-import admin from '../middleware/admin';
+import organizer from '../middleware/organizer';
 import auth from '../middleware/auth';
 import userDAO from "../DAO/userDAO";
 import eventDAO from "../DAO/eventDAO";
+import mongoose from "mongoose";
+import UserDAO from "../DAO/userDAO";
 const userEndpoint = (router) => {
     /**
      * @swagger
@@ -55,9 +57,51 @@ const userEndpoint = (router) => {
 
     /**
      * @swagger
+     * /api/user/auth:
+     *   post:
+     *     summary: Authenticate a user
+     *     tags: [Users]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               login:
+     *                 type: string
+     *               password:
+     *                 type: string
+     *             required:
+     *               - login
+     *               - password
+     *     responses:
+     *       '200':
+     *         description: Authentication successful
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 token:
+     *                   type: string
+     */
+    //Authenticate organiser
+    router.post('/api/organizer/auth', async (request, response, next) => {
+        try {
+            let result = await business.getUserManager(request).authenticateOrganizer(request.body.login, request.body.password);
+            response.status(200).send(result);
+        } catch (error) {
+            applicationException.errorHandler(error, response);
+        }
+    });
+
+    /**
+     * @swagger
      * /api/user/create:
      *   post:
      *     summary: Create a new user
+     *     description: Endpoint to register a new user in the system.
      *     tags: [Users]
      *     requestBody:
      *       required: true
@@ -65,6 +109,9 @@ const userEndpoint = (router) => {
      *         application/json:
      *           schema:
      *             $ref: '#/components/schemas/User'
+     *           example:
+     *             email: user@example.com
+     *             password: pass@123
      *     responses:
      *       '200':
      *         description: The created user
@@ -72,16 +119,90 @@ const userEndpoint = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/User'
+     *             example:
+     *               id: 12345
+     *               email: user@example.com
+     *       '400':
+     *         description: Bad Request
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 error:
+     *                   type: string
+     *                   description: Reason for the bad request
+     *             example:
+     *               error: Password does not meet the strength criteria.
      */
     // Create user
     router.post('/api/user/create', async (request, response, next) => {
         try {
+            // Validate the password using the regex
+            const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,15}$/;
+            if (!strongRegex.test(request.body.password)) {
+                response.status(400).json({ error: 'Password does not meet the strength criteria.' });
+                return;
+            }
+
+            // Proceed with user creation if the password is strong
             const result = await business.getUserManager(request).createNewOrUpdate(request.body);
-            response.status(200).send(result);
+            response.status(200).json(result);
         } catch (error) {
             applicationException.errorHandler(error, response);
         }
     });
+
+    router.post('/api/user/update', async (request, response, next) => {
+        console.log("update body: ", request.body)
+        try {
+            const result = await business.getUserManager(request).createNewOrUpdate(request.body);
+            response.status(200).json(result);
+        } catch (error) {
+            applicationException.errorHandler(error, response);
+        }
+    });
+
+
+    router.get('/api/user/preferences/:userId', async (req, res) => {
+        try {
+            const userId = req.params.userId;
+
+            // Find the user by userId and return the oneTimeMonitChecked flag state
+            const user = await UserDAO.model.findOne({ _id: userId });
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            res.status(200).json({ oneTimeMonitChecked: user.preferences.oneTimeMonitChecked });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Server error' });
+        }
+    });
+
+    // Update the oneTimeMonitChecked flag for a user
+    router.put('/api/user/:userId/preferences/onetimemonit', async (req, res) => {
+        const { userId } = req.params;
+
+        try {
+            const user = await UserDAO.model.findById(userId);
+
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            // Toggle the oneTimeMonitChecked flag to true
+            user.preferences.oneTimeMonitChecked = true;
+            await user.save();
+
+            return res.status(200).json({ message: 'oneTimeMonitChecked updated successfully' });
+        } catch (error) {
+            console.error('Error updating oneTimeMonitChecked:', error);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+    });
+
 
     /**
      * @swagger
@@ -167,7 +288,7 @@ const userEndpoint = (router) => {
      *                   $ref: '#/components/schemas/User'
      */
     //Cart
-    // Add ticket(s) to cart
+    // Add ticket to cart
     router.post('/api/user/:userId/cart/add-ticket/:eventId/:ticketId', auth, async (req, res) => {
         const { userId, eventId, ticketId } = req.params;
         let { quantity } = req.body;
@@ -187,6 +308,37 @@ const userEndpoint = (router) => {
             res.status(500).json({ error: error.message });
         }
     });
+
+    //Cart
+    // Add ticket(s) to cart
+    router.post('/api/user/:userId/cart/add-tickets/:eventId/:ticketId', auth, async (req, res) => {
+        const { userId, eventId, ticketId } = req.params;
+        let { quantity, chosenSeats } = req.body;
+
+        console.log("chosenSeats from body: ",chosenSeats)
+
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            // Update isAvailable field in roomSchema for chosen seats
+            // await userDAO.updateIsAvailableForEventSeats(eventId, chosenSeats, session);
+
+            // Add ticket(s) to cart
+            const user = await userDAO.addWithSeatsToCart(userId, eventId, ticketId, quantity, chosenSeats, session);
+
+            await session.commitTransaction();
+            session.endSession();
+
+            res.status(200).json({ success: true, user });
+        } catch (error) {
+            await session.abortTransaction();
+            session.endSession();
+
+            res.status(500).json({ error: error.message });
+        }
+    });
+
 
     /**
      * @swagger
@@ -293,6 +445,17 @@ const userEndpoint = (router) => {
         try {
             const cart = await userDAO.getCart(userId);
             res.status(200).json({ success: true, cart });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Get user's preferences
+    router.get('/api/user/:userId/preferences', auth, async (req, res) => {
+        const { userId } = req.params;
+        try {
+            const preferences = await userDAO.getPreferences(userId);
+            res.status(200).json({ success: true, preferences });
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
@@ -488,6 +651,34 @@ const userEndpoint = (router) => {
             response.status(200).send({ isLiked: result });
         } catch (error) {
             applicationException.errorHandler(error, response);
+        }
+    });
+
+
+    // Organisers endpoints
+    // TODO: przenieść do osobnego DAO
+
+    // Get organiser ownedEvents
+    router.get('/api/organizer/:userId', auth, async (req, res) => {
+        const { userId } = req.params;
+
+        try {
+            const ownedEvents = await userDAO.getOwnedEvents(userId);
+            res.status(200).json({ ownedEvents });
+        } catch (error) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    // Add event to organizer's ownedEvents
+    router.post('/api/organizer/:userId/add-event/:eventId', auth, async (req, res) => {
+        const { userId, eventId } = req.params;
+
+        try {
+            await userDAO.addEventToOwnedEvents(userId, eventId);
+            res.status(200).json({ message: 'Event added to organizer\'s ownedEvents successfully.' });
+        } catch (error) {
+            applicationException.errorHandler(error, res);
         }
     });
 

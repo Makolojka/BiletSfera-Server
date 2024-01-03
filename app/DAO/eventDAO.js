@@ -2,8 +2,9 @@ import mongoose from 'mongoose';
 import uniqueValidator from 'mongoose-unique-validator';
 import mongoConverter from '../service/mongoConverter';
 import * as _ from "lodash";
-import {ObjectId} from "mongodb";
 import applicationException from "../service/applicationException";
+import TicketDAO from "./ticketDAO";
+import UserDAO from "./userDAO";
 
 const eventSchema = new mongoose.Schema({
     // Basic event info
@@ -23,6 +24,23 @@ const eventSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'tickets'
     }],
+
+    // Room schema
+    roomSchema: {
+        roomSchema: [
+            {
+                seats: [
+                    {
+                        id: { type: String },
+                        type: { type: String },
+                        color: { type: String },
+                        isAvailable: { type: Boolean },
+                    },
+                ],
+            },
+        ],
+        roomSchemaStyle: { type: String },
+    },
 
     // Artists array
     artists: [{
@@ -166,6 +184,115 @@ async function incrementEventViews(eventId) {
     }
 }
 
+// Create event using transaction
+// async function startEventTransaction(newEventDetails) {
+//     const session = await mongoose.startSession();
+//     try {
+//         session.startTransaction();
+//
+//         const ticketIds = await TicketDAO.createTicketsAndGetIds(newEventDetails.tickets, session);
+//
+//         // Proceed with event creation using ticketIds
+//         const createdEvent = await TicketDAO.createEvent(newEventDetails, ticketIds, session);
+//
+//         await session.commitTransaction();
+//         session.endSession();
+//
+//         return createdEvent;
+//     } catch (error) {
+//         await session.abortTransaction();
+//         session.endSession();
+//         throw new Error('Transaction aborted: ' + error.message);
+//     }
+// }
+// async function createEventWithTickets(newEventDetails, ticketIds, session) {
+//     try {
+//         newEventDetails.tickets = ticketIds;
+//         const eventCreationPromise =  Promise.resolve().then(() => {
+//             if (!newEventDetails.id) {
+//                 return new EventModel(newEventDetails).save({session}).then(result => {
+//                     if (result[0]) {
+//                         return mongoConverter(result[0]);
+//                     }
+//                 });
+//             } else {
+//                 return EventModel.findByIdAndUpdate(newEventDetails.id, _.omit(newEventDetails, 'id'), {new: true, session});
+//             }
+//         });
+//         return eventCreationPromise;
+//     } catch (error) {
+//         throw new Error('Error creating event: ' + error.message);
+//     }
+// }
+async function createEventWithTickets(newEventDetails, ticketIds, session) {
+    try {
+        newEventDetails.tickets = ticketIds;
+
+        let createdEvent;
+        if (!newEventDetails.id) {
+            const result = await new EventModel(newEventDetails).save({ session });
+            console.log('Result from saving new event:', result); // Check this log
+            if (result) {
+                createdEvent = mongoConverter(result);
+            }
+        } else {
+            const updatedEvent = await EventModel.findByIdAndUpdate(newEventDetails.id, _.omit(newEventDetails, 'id'), { new: true, session });
+            console.log('Result from updating event:', updatedEvent); // Check this log
+            if (updatedEvent) {
+                createdEvent = mongoConverter(updatedEvent);
+            }
+        }
+
+        console.log('Final created event:', createdEvent); // Check this log
+        return createdEvent;
+    } catch (error) {
+        throw new Error('Error creating event: ' + error.message);
+    }
+}
+
+
+
+
+async function startEventTransaction(newEventDetails) {
+    let session;
+    try {
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        const ticketIds = await TicketDAO.createTicketsAndGetIds(newEventDetails.tickets, session);
+
+        const createdEvent = await createEventWithTickets(newEventDetails, ticketIds, session);
+
+        await addEventToOrganizerOwnedEvents(newEventDetails, createdEvent.id, session);
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return createdEvent;
+    } catch (error) {
+        if (session) {
+            await session.abortTransaction();
+            session.endSession();
+        }
+        throw new Error('Transaction aborted: ' + error.message);
+    }
+}
+
+async function addEventToOrganizerOwnedEvents(newEventDetails, eventId, session) {
+    try {
+        const organiser = await UserDAO.model.findOne({ name: newEventDetails.organiser }).session(session);
+
+        if (organiser) {
+            organiser.ownedEvents.push(eventId);
+            await organiser.save();
+            return true;
+        }
+        throw new Error('Organizer not found');
+    } catch (error) {
+        throw new Error('Error adding event to organizer ownedEvents: ' + error.message);
+    }
+}
+
 export default {
     query: query,
     get: get,
@@ -173,6 +300,7 @@ export default {
     getLikesOrFollowersCount: getLikesOrFollowersCount,
     addLikeOrFollower: addLikeOrFollower,
     incrementEventViews: incrementEventViews,
+    startEventTransaction: startEventTransaction,
 
     model: EventModel
 };

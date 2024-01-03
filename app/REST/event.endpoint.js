@@ -2,6 +2,10 @@ import business from '../business/business.container';
 import eventDAO from "../DAO/eventDAO";
 import userDAO from "../DAO/userDAO";
 import applicationException from "../service/applicationException";
+import mongoose from "mongoose";
+import EventDAO from "../DAO/eventDAO";
+import UserDAO from "../DAO/userDAO";
+import {parseDate} from "../service/dateParserService";
 
 const eventEndpoint = (router) => {
     /**
@@ -30,12 +34,88 @@ const eventEndpoint = (router) => {
     // Get all events
     router.get('/api/events', async (request, response, next) => {
         try {
-            let result = await business.getEventManager().query();
-            response.status(200).send(result);
+            const currentDate = new Date();
+            const allEvents = await business.getEventManager().query();
+
+            const activeEvents = allEvents.filter(event => {
+                const parsedDate = parseDate(event.date);
+
+                return parsedDate >= currentDate;
+            });
+
+            response.status(200).send(activeEvents);
         } catch (error) {
             console.log(error);
+            response.status(500).send({ error: 'Failed to retrieve active events.' });
         }
     });
+    // router.get('/api/events', async (request, response, next) => {
+    //     try {
+    //         let result = await business.getEventManager().query();
+    //         response.status(200).send(result);
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    // });
+
+    // Get top 10 events
+    router.get('/api/events/most-viewed', async (request, response, next) => {
+        try {
+            const currentDate = new Date();
+            const topEvents = await EventDAO.model.aggregate([
+                { $match: { date: { $gte: currentDate } } }, // Filter out events with expired dates
+                { $sort: { views: -1 } },
+                { $limit: 10 }
+            ]);
+
+            response.status(200).send(topEvents);
+        } catch (error) {
+            console.log(error);
+            response.status(500).send({ error: 'Failed to retrieve top active events.' });
+        }
+    });
+
+    // Get events based on user preferences
+    router.get('/api/events/preferences/:userId', async (req, res) => {
+        const { userId } = req.params;
+
+        try {
+            const user = await UserDAO.model.findOne({ _id: userId }).select('preferences');
+
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            const userPreferences = [
+                ...user.preferences.selectedCategories,
+                ...user.preferences.selectedSubCategories
+            ];
+
+            const allEvents = await EventDAO.model.aggregate([
+                {
+                    $match: {
+                        $or: [
+                            { category: { $in: userPreferences } },
+                            { subCategory: { $in: userPreferences } }
+                        ]
+                    }
+                }
+            ]);
+
+            const currentDate = new Date();
+            const activeEvents = allEvents.filter(event => {
+                const parsedDate = parseDate(event.date);
+                return parsedDate >= currentDate;
+            });
+
+            res.status(200).json({ matchedEvents: activeEvents });
+        } catch (error) {
+            console.error('Error:', error);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    });
+
+
 
     /**
      * @swagger
@@ -60,8 +140,13 @@ const eventEndpoint = (router) => {
      */
     //Get a single event
     router.get('/api/events/:id', async (request, response, next) => {
-        let result = await business.getEventManager().query();
-        response.status(200).send(result.find(obj => obj.id === request.params.id));
+        try{
+            let result = await business.getEventManager().query();
+            response.status(200).send(result.find(obj => obj.id === request.params.id));
+        }catch (error) {
+            console.error('Error:', error);
+            response.status(500).json({ message: 'Internal server error' });
+        }
     });
 
     /**
@@ -91,6 +176,20 @@ const eventEndpoint = (router) => {
             response.status(200).send(result);
         } catch (error) {
             console.log(error);
+        }
+    });
+
+    // Create a single event using transactions
+    router.post('/events/transaction', async (req, res) => {
+        try {
+            const newEventDetails = req.body;
+            console.log("newEventDetails: ",newEventDetails)
+
+            const createdEvent = await EventDAO.startEventTransaction(newEventDetails);
+
+            res.status(200).json({ message: 'Event and tickets created successfully', event: createdEvent });
+        } catch (error) {
+            res.status(500).json({ message: 'Error creating event and tickets', error: error.message });
         }
     });
 
@@ -174,7 +273,7 @@ const eventEndpoint = (router) => {
      *                 count:
      *                   type: integer
      */
-    // Get likes and followes
+    // Get likes and follows
     router.get('/api/event/likes-follows/:eventId/:actionType', async (request, response, next) => {
         try {
             const eventId = request.params.eventId;

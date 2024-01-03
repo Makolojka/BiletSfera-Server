@@ -94,6 +94,16 @@ const ticketEndpoint = (router) => {
         }
     });
 
+    // Create a single ticket and return object id
+    router.post('/api/events/ticket/id', async (request, response, next) => {
+        try {
+            let result = await business.getTicketManager().createNewOrUpdate(request.body);
+            response.status(201).json(result);
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
     /**
      * @swagger
      * /api/events/{id}/tickets:
