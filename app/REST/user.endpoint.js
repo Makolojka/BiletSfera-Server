@@ -164,11 +164,10 @@ const userEndpoint = (router) => {
     });
 
 
-    router.get('/api/user/preferences/:userId', async (req, res) => {
+    router.get('/api/user/preferences/:userId', auth, async (req, res) => {
         try {
             const userId = req.params.userId;
 
-            // Find the user by userId and return the oneTimeMonitChecked flag state
             const user = await UserDAO.model.findOne({ _id: userId });
             if (!user) {
                 return res.status(404).json({ message: 'User not found' });
