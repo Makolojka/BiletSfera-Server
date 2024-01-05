@@ -149,27 +149,7 @@ const eventEndpoint = (router) => {
         }
     });
 
-    /**
-     * @swagger
-     * /api/event:
-     *   post:
-     *     summary: Create a new event
-     *     tags: [Events]
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             $ref: '#/components/schemas/Event'
-     *     responses:
-     *       '200':
-     *         description: The created event
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/Event'
-     */
-    // Create a single event
+    // Create a single event //Deprecated
     router.post('/api/event', async (request, response, next) => {
         try {
             let result = await business.getEventManager().createNewOrUpdate(request.body);
@@ -179,6 +159,45 @@ const eventEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /events/transaction:
+     *   post:
+     *     summary: Create a single event using transactions
+     *     tags: [Events]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/Event'
+     *     responses:
+     *       '200':
+     *         description: Event and tickets created successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   description: Message indicating successful creation
+     *                 event:
+     *                   $ref: '#/components/schemas/Event'
+     *       '500':
+     *         description: Error creating event and tickets
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   description: Message indicating the error
+     *                 error:
+     *                   type: string
+     *                   description: Description of the error
+     */
     // Create a single event using transactions
     router.post('/events/transaction', async (req, res) => {
         try {
