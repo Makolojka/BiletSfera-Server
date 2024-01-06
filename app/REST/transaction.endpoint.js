@@ -228,8 +228,8 @@ const transactionEndpoint = (router) => {
      * @swagger
      * /api/organiser/stats/tickets-sold-by-organiser/{organiserName}:
      *   get:
-     *     summary: Get sold tickets for a specific organizer
-     *     description: Endpoint to retrieve sold tickets for a specific organizer by organizer name.
+     *     summary: Get sold tickets for a specific organiser
+     *     description: Endpoint to retrieve sold tickets for a specific organiser by organiser name.
      *     tags: [Organiser]
      *     parameters:
      *       - in: path
@@ -237,10 +237,10 @@ const transactionEndpoint = (router) => {
      *         required: true
      *         schema:
      *           type: string
-     *         description: Name of the organizer to retrieve sold tickets
+     *         description: Name of the organiser to retrieve sold tickets
      *     responses:
      *       '200':
-     *         description: Number of sold tickets for the organizer
+     *         description: Number of sold tickets for the organiser
      *         content:
      *           application/json:
      *             schema:
@@ -248,7 +248,7 @@ const transactionEndpoint = (router) => {
      *               properties:
      *                 ticketsSold:
      *                   type: number
-     *                   description: Number of sold tickets for the organizer
+     *                   description: Number of sold tickets for the organiser
      *       '500':
      *         description: Internal Server Error
      *         content:
@@ -276,8 +276,8 @@ const transactionEndpoint = (router) => {
      * @swagger
      * /api/organiser/stats/total-earnings-by-organiser/{organiserName}:
      *   get:
-     *     summary: Get total earnings for a specific organizer
-     *     description: Endpoint to retrieve total earnings for a specific organizer by organizer name.
+     *     summary: Get total earnings for a specific organiser
+     *     description: Endpoint to retrieve total earnings for a specific organiser by organiser name.
      *     tags: [Organiser]
      *     parameters:
      *       - in: path
@@ -285,10 +285,10 @@ const transactionEndpoint = (router) => {
      *         required: true
      *         schema:
      *           type: string
-     *         description: Name of the organizer to retrieve total earnings
+     *         description: Name of the organiser to retrieve total earnings
      *     responses:
      *       '200':
-     *         description: Total earnings for the organizer
+     *         description: Total earnings for the organiser
      *         content:
      *           application/json:
      *             schema:
@@ -296,7 +296,7 @@ const transactionEndpoint = (router) => {
      *               properties:
      *                 totalEarnings:
      *                   type: number
-     *                   description: Total earnings for the organizer
+     *                   description: Total earnings for the organiser
      *       '500':
      *         description: Internal Server Error
      *         content:
@@ -373,7 +373,7 @@ const transactionEndpoint = (router) => {
      * /api/organiser/stats/total-views-by-organiser/{organiserName}:
      *   get:
      *     summary: Get total views earned by all events for a given organiser
-     *     description: Endpoint to retrieve total views earned by all events for a specific organizer by organizer name.
+     *     description: Endpoint to retrieve total views earned by all events for a specific organiser by organiser name.
      *     tags: [Organiser]
      *     parameters:
      *       - in: path
@@ -384,7 +384,7 @@ const transactionEndpoint = (router) => {
      *         description: Name of the organizer to retrieve total views
      *     responses:
      *       '200':
-     *         description: Total views earned by all events for the organizer
+     *         description: Total views earned by all events for the organiser
      *         content:
      *           application/json:
      *             schema:
@@ -392,7 +392,7 @@ const transactionEndpoint = (router) => {
      *               properties:
      *                 totalViews:
      *                   type: number
-     *                   description: Total views earned by all events for the organizer
+     *                   description: Total views earned by all events for the organiser
      *       '500':
      *         description: Internal Server Error
      *         content:
@@ -429,7 +429,7 @@ const transactionEndpoint = (router) => {
      *         required: true
      *         schema:
      *           type: string
-     *         description: Name of the organizer to retrieve sale data
+     *         description: Name of the organiser to retrieve sale data
      *     responses:
      *       '200':
      *         description: Sale data for charts for all sales by organiser

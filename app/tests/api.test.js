@@ -656,3 +656,246 @@ describe('Get active events', () => {
         expect(response.body).toHaveLength(0);
     });
 });
+
+describe('Organiser actions', () => {
+    it('should add event to organiser\'s owned events', async () => {
+        // Arrange
+        // Create ticket
+        const ticketDetails = {
+            type: 'Auto Moto Fiesta',
+            price: 129,
+            dayOfWeek: 'sobota-niedziela',
+            date: '13.08.2023',
+            color: '#222222',
+            maxNumberOfTickets: 20,
+            availableTickets: 20,
+        };
+        const createdTicket = await request(app)
+            .post(`/api/events/ticket/id`)
+            .send(ticketDetails);
+        const { id: ticketId } = createdTicket.body;
+
+        // Create an organizer user
+        const organiserData = {
+            name: 'OrganiserTest',
+            email: 'organiser@test.com',
+            password: 'zaq123!@K',
+            role: 'organizer',
+            isOrganizer: true
+        };
+        const createdOrganiserResponse = await request(app)
+            .post('/api/user/create')
+            .send(organiserData);
+        const { userId: userId } = createdOrganiserResponse.body;
+
+        // Authenticate/Log in the organizer
+        const loginCredentials = {
+            login: 'OrganiserTest',
+            password: 'zaq123!@K',
+        };
+        const loginResponse = await request(app)
+            .post('/api/user/auth')
+            .send(loginCredentials);
+        const token = loginResponse.body.token;
+
+        // Create an event
+        const eventDetails = {
+            title: 'Auto Moto Fiesta',
+            image: 'https://www.ebilet.pl/media/cms/media/d0lkjovd/amf_poster_going_552x736-b45e835c-cbc7-00fe-b9cc-d46a8c80f7e8.webp',
+            text: 'Drugi Festiwal Muzyczno – Motoryzacyjny...',
+            additionalText: 'Festiwal łączy...',
+            organiser: 'Good Show',
+            tickets: [ticketId],
+            date: '13.08.2024',
+            location: 'Kielce',
+            category: ['Muzyka', 'Inne'],
+            subCategory: ['Rock', 'Metal'],
+            views: 0
+        };
+
+        const createdEventResponse = await request(app)
+            .post('/api/event')
+            .set('Authorization', "Bearer "+token)
+            .send(eventDetails);
+        const { id: eventId } = createdEventResponse.body;
+
+        // Act
+        const addEventResponse = await request(app)
+            .post('/api/organizer/'+userId+'/add-event/'+eventId)
+            .set('Authorization', "Bearer "+token)
+
+        // Assert
+        expect(addEventResponse.status).toBe(200);
+    });
+
+    it('should get organiser\'s owned events', async () => {
+        // Arrange
+        // Create ticket
+        const ticketDetails = {
+            type: 'Auto Moto Fiesta',
+            price: 129,
+            dayOfWeek: 'sobota-niedziela',
+            date: '13.08.2023',
+            color: '#222222',
+            maxNumberOfTickets: 20,
+            availableTickets: 20,
+        };
+        const createdTicket = await request(app)
+            .post(`/api/events/ticket/id`)
+            .send(ticketDetails);
+        const { id: ticketId } = createdTicket.body;
+
+        // Create an organiser user
+        const organiserData = {
+            name: 'OrganiserTest',
+            email: 'organiser@test.com',
+            password: 'zaq123!@K',
+            role: 'organizer',
+            isOrganizer: true
+        };
+        const createdOrganiserResponse = await request(app)
+            .post('/api/user/create')
+            .send(organiserData);
+        const { userId: userId } = createdOrganiserResponse.body;
+
+        // Authenticate/Log in the organiser
+        const loginCredentials = {
+            login: 'OrganiserTest',
+            password: 'zaq123!@K',
+        };
+        const loginResponse = await request(app)
+            .post('/api/user/auth')
+            .send(loginCredentials);
+        const token = loginResponse.body.token;
+
+        // Create an event
+        const eventDetails = {
+            title: 'Auto Moto Fiesta',
+            image: 'https://www.ebilet.pl/media/cms/media/d0lkjovd/amf_poster_going_552x736-b45e835c-cbc7-00fe-b9cc-d46a8c80f7e8.webp',
+            text: 'Drugi Festiwal Muzyczno – Motoryzacyjny...',
+            additionalText: 'Festiwal łączy...',
+            organiser: 'Good Show',
+            tickets: [ticketId],
+            date: '13.08.2024',
+            location: 'Kielce',
+            category: ['Muzyka', 'Inne'],
+            subCategory: ['Rock', 'Metal'],
+            views: 0
+        };
+
+        const createdEventResponse = await request(app)
+            .post('/api/event')
+            .set('Authorization', "Bearer "+token)
+            .send(eventDetails);
+        const { id: eventId } = createdEventResponse.body;
+
+        await request(app)
+            .post('/api/organizer/'+userId+'/add-event/'+eventId)
+            .set('Authorization', "Bearer "+token)
+
+        // Act
+        const ownedEventsResponse = await request(app)
+            .get('/api/organizer/'+userId)
+            .set('Authorization', "Bearer "+token)
+
+        // Assert
+        expect(ownedEventsResponse.status).toBe(200);
+    });
+
+    it('should get multiple organiser\'s owned events', async () => {
+        // Arrange
+        // Create ticket
+        const ticketDetails = {
+            type: 'Auto Moto Fiesta',
+            price: 129,
+            dayOfWeek: 'sobota-niedziela',
+            date: '13.08.2023',
+            color: '#222222',
+            maxNumberOfTickets: 20,
+            availableTickets: 20,
+        };
+        const createdTicket = await request(app)
+            .post(`/api/events/ticket/id`)
+            .send(ticketDetails);
+        const { id: ticketId } = createdTicket.body;
+
+        // Create an organiser user
+        const organiserData = {
+            name: 'OrganiserTest',
+            email: 'organiser@test.com',
+            password: 'zaq123!@K',
+            role: 'organizer',
+            isOrganizer: true
+        };
+        const createdOrganiserResponse = await request(app)
+            .post('/api/user/create')
+            .send(organiserData);
+        const { userId: userId } = createdOrganiserResponse.body;
+
+        // Authenticate/Log in the organiser
+        const loginCredentials = {
+            login: 'OrganiserTest',
+            password: 'zaq123!@K',
+        };
+        const loginResponse = await request(app)
+            .post('/api/user/auth')
+            .send(loginCredentials);
+        const token = loginResponse.body.token;
+
+        // Create an event
+        const eventDetails = {
+            title: 'Auto Moto Fiesta',
+            image: 'https://www.ebilet.pl/media/cms/media/d0lkjovd/amf_poster_going_552x736-b45e835c-cbc7-00fe-b9cc-d46a8c80f7e8.webp',
+            text: 'Drugi Festiwal Muzyczno – Motoryzacyjny...',
+            additionalText: 'Festiwal łączy...',
+            organiser: 'Good Show',
+            tickets: [ticketId],
+            date: '13.08.2024',
+            location: 'Kielce',
+            category: ['Muzyka', 'Inne'],
+            subCategory: ['Rock', 'Metal'],
+            views: 0
+        };
+
+        const eventDetails2 = {
+            title: 'Auto Moto Fiesta 2',
+            image: 'https://www.ebilet.pl/media/cms/media/d0lkjovd/amf_poster_going_552x736-b45e835c-cbc7-00fe-b9cc-d46a8c80f7e8.webp',
+            text: 'Drugi Festiwal Muzyczno – Motoryzacyjny...',
+            additionalText: 'Festiwal łączy...',
+            organiser: 'Good Show',
+            tickets: [ticketId],
+            date: '13.08.2025',
+            location: 'Kielce',
+            category: ['Muzyka', 'Inne'],
+            subCategory: ['Rock', 'Metal'],
+            views: 0
+        };
+
+        const createdEventResponse = await request(app)
+            .post('/api/event')
+            .set('Authorization', "Bearer "+token)
+            .send(eventDetails);
+        const { id: eventId } = createdEventResponse.body;
+        const createdEventResponse2 = await request(app)
+            .post('/api/event')
+            .set('Authorization', "Bearer "+token)
+            .send(eventDetails2);
+        const { id: eventId2 } = createdEventResponse2.body;
+
+        await request(app)
+            .post('/api/organizer/'+userId+'/add-event/'+eventId)
+            .set('Authorization', "Bearer "+token)
+        await request(app)
+            .post('/api/organizer/'+userId+'/add-event/'+eventId2)
+            .set('Authorization', "Bearer "+token)
+
+        // Act
+        const ownedEventsResponse = await request(app)
+            .get('/api/organizer/'+userId)
+            .set('Authorization', "Bearer "+token)
+
+        // Assert
+        expect(ownedEventsResponse.status).toBe(200);
+        expect(ownedEventsResponse.body.ownedEvents).toHaveLength(2);
+    });
+});
