@@ -15,7 +15,7 @@ beforeEach(async () => {
     await Event.model.deleteMany({});
 });
 
-describe('Create user endpoint', () => {
+describe('Create user tests', () => {
     it('should create user and respond with 200 status code', async () => {
         // Arrange
         const userData = {
@@ -73,7 +73,7 @@ describe('Create user endpoint', () => {
         expect(response.status).toBe(400);
     });
 });
-describe('User Authentication/Login Endpoint', () => {
+describe('User Authentication/Login endpoint tests', () => {
     it('should authenticate a user with valid credentials', async () => {
         // Arrange
         const userData = {
@@ -129,7 +129,7 @@ describe('User Authentication/Login Endpoint', () => {
     });
 });
 
-describe('Logout user', () => {
+describe('Logout user tests', () => {
     it('should logout user and respond with 200 status code', async () => {
         // Arrange
         const userData = {
@@ -163,7 +163,7 @@ describe('Logout user', () => {
     });
 });
 
-describe('Get tickets by ID', () => {
+describe('Ticket tests', () => {
     it('should get tickets by ID and respond with 200 status code', async () => {
         // Create ticket
         const ticketDetails = {
@@ -393,7 +393,7 @@ describe('Users cart - Remove ticket(s) from cart', () => {
 });
 
 
-describe('Like or Follow Event', () => {
+describe('Like or Follow tests', () => {
     it('should like or follow an event and respond with 200 status code', async () => {
         // Arrange
         // Create ticket
@@ -473,7 +473,7 @@ describe('Like or Follow Event', () => {
     });
 });
 
-describe('Get active events', () => {
+describe('Active events tests', () => {
     it('should return active event with date greater than or equal to current date', async () => {
         // Arrange
         // Create ticket
@@ -657,7 +657,7 @@ describe('Get active events', () => {
     });
 });
 
-describe('Organiser actions', () => {
+describe('Organiser tests', () => {
     it('should add event to organiser\'s owned events', async () => {
         // Arrange
         // Create ticket
@@ -897,5 +897,221 @@ describe('Organiser actions', () => {
         // Assert
         expect(ownedEventsResponse.status).toBe(200);
         expect(ownedEventsResponse.body.ownedEvents).toHaveLength(2);
+    });
+});
+describe('User preferences tests', () => {
+    it('should update user preferences and respond with 200 status code', async () => {
+        // Arrange
+        const userData = {
+            name: 'TEST',
+            email: 'email@gmail.com',
+            password: 'zaq123!@K'
+        };
+        const createdUser = await request(app)
+            .post('/api/user/create')
+            .send(userData);
+        const { userId: userId } = createdUser.body;
+
+        // Authenticate/Log in the organiser
+        const loginCredentials = {
+            login: 'TEST',
+            password: 'zaq123!@K',
+        };
+        const loginResponse = await request(app)
+            .post('/api/user/auth')
+            .send(loginCredentials);
+        const token = loginResponse.body.token;
+
+        // Update preferences
+        const updatePreferencesBody = {
+            name: 'TEST',
+            email: 'email@gmail.com',
+            id: userId,
+            preferences: {
+                selectedCategories: ['Kino', 'Muzyka'],
+                selectedSubCategories: ['Pop', 'Rock']
+            }
+        };
+
+        // Act
+        const updateResponse = await request(app)
+            .post('/api/user/update')
+            .set('Authorization', "Bearer "+token)
+            .send(updatePreferencesBody);
+
+        // Assert
+        expect(updateResponse.status).toBe(200);
+        expect(Array.isArray(updateResponse.body)).toBeDefined();
+    });
+
+    it('should get user preferences and respond with 200 status code', async () => {
+        // Arrange
+        const userData = {
+            name: 'TEST',
+            email: 'email@gmail.com',
+            password: 'zaq123!@K'
+        };
+        const createdUser = await request(app)
+            .post('/api/user/create')
+            .send(userData);
+        const { userId: userId } = createdUser.body;
+
+        // Authenticate/Log in the organiser
+        const loginCredentials = {
+            login: 'TEST',
+            password: 'zaq123!@K',
+        };
+        const loginResponse = await request(app)
+            .post('/api/user/auth')
+            .send(loginCredentials);
+        const token = loginResponse.body.token;
+
+        // Update preferences
+        const updatePreferencesBody = {
+            name: 'TEST',
+            email: 'email@gmail.com',
+            id: userId,
+            preferences: {
+                selectedCategories: ['Kino', 'Muzyka'],
+                selectedSubCategories: ['Pop', 'Rock']
+            }
+        };
+
+        await request(app)
+            .post('/api/user/update')
+            .set('Authorization', "Bearer "+token)
+            .send(updatePreferencesBody);
+
+        // Act
+        const preferencesResponse = await request(app)
+            .get('/api/user/'+userId+'/preferences')
+            .set('Authorization', "Bearer "+token)
+        console.log('Preferences Response:', preferencesResponse.body);
+
+        // Assert
+        expect(preferencesResponse.status).toBe(200);
+        expect(Array.isArray(preferencesResponse.body)).toBeDefined();
+        expect(Array.isArray(preferencesResponse.body.preferences)).toBeDefined();
+        expect(preferencesResponse.body.preferences.selectedCategories).toEqual(['Kino', 'Muzyka']);
+        expect(preferencesResponse.body.preferences.selectedSubCategories).toEqual(['Pop', 'Rock']);
+    });
+
+    it('should get user preferences for empty array and respond with 200 status code', async () => {
+        // Arrange
+        const userData = {
+            name: 'TEST',
+            email: 'email@gmail.com',
+            password: 'zaq123!@K'
+        };
+        const createdUser = await request(app)
+            .post('/api/user/create')
+            .send(userData);
+        const { userId: userId } = createdUser.body;
+
+        // Authenticate/Log in the organiser
+        const loginCredentials = {
+            login: 'TEST',
+            password: 'zaq123!@K',
+        };
+        const loginResponse = await request(app)
+            .post('/api/user/auth')
+            .send(loginCredentials);
+        const token = loginResponse.body.token;
+
+        // Act
+        const preferencesResponse = await request(app)
+            .get('/api/user/'+userId+'/preferences')
+            .set('Authorization', "Bearer "+token)
+
+        // Assert
+        expect(preferencesResponse.status).toBe(200);
+        expect(Array.isArray(preferencesResponse.body)).toBeDefined();
+        expect(preferencesResponse.body.preferences).toEqual({"oneTimeMonitChecked": false,
+            "selectedCategories": [],
+            "selectedSubCategories": []})
+    });
+
+    it('should get matched events based on user preferences and respond with 200 status code', async () => {
+        // Arrange
+        // Create ticket
+        const ticketDetails = {
+            type: 'Auto Moto Fiesta',
+            price: 129,
+            dayOfWeek: 'sobota-niedziela',
+            date: '13.08.2023',
+            color: '#222222',
+            maxNumberOfTickets: 20,
+            availableTickets: 20,
+        };
+        const createdTicket = await request(app)
+            .post(`/api/events/ticket/id`)
+            .send(ticketDetails);
+        const { id: ticketId } = createdTicket.body;
+
+        // Create an event
+        const eventDetails = {
+            title: 'Auto Moto Fiesta',
+            image: 'https://www.ebilet.pl/media/cms/media/d0lkjovd/amf_poster_going_552x736-b45e835c-cbc7-00fe-b9cc-d46a8c80f7e8.webp',
+            text: 'Drugi Festiwal Muzyczno – Motoryzacyjny...',
+            additionalText: 'Festiwal łączy...',
+            organiser: 'Good Show',
+            tickets: [ticketId],
+            date: '13.08.2024',
+            location: 'Kielce',
+            category: ['Muzyka', 'Inne'],
+            subCategory: ['Rock', 'Metal'],
+            views: 0
+        };
+
+        // Create user
+        const userData = {
+            name: 'TEST',
+            email: 'email@gmail.com',
+            password: 'zaq123!@K'
+        };
+        const createdUser = await request(app)
+            .post('/api/user/create')
+            .send(userData);
+        const { userId: userId } = createdUser.body;
+
+        // Authenticate/Log in the organiser
+        const loginCredentials = {
+            login: 'TEST',
+            password: 'zaq123!@K',
+        };
+        const loginResponse = await request(app)
+            .post('/api/user/auth')
+            .send(loginCredentials);
+        const token = loginResponse.body.token;
+
+        await request(app)
+            .post('/api/event')
+            .set('Authorization', "Bearer "+token)
+            .send(eventDetails);
+
+        // Update preferences
+        const updatePreferencesBody = {
+            name: 'TEST',
+            email: 'email@gmail.com',
+            id: userId,
+            preferences: {
+                selectedCategories: ['Kino', 'Muzyka'],
+                selectedSubCategories: ['Pop', 'Rock']
+            }
+        };
+        await request(app)
+            .post('/api/user/update')
+            .set('Authorization', "Bearer "+token)
+            .send(updatePreferencesBody);
+
+        // Act
+        const matchedEvents = await request(app)
+            .get('/api/events/preferences/'+userId)
+            .set('Authorization', "Bearer "+token)
+
+        // Assert
+        expect(matchedEvents.status).toBe(200);
+        expect(Array.isArray(matchedEvents.body.matchedEvents)).toBe(true);
+        expect(matchedEvents.body.matchedEvents.length).toBe(1);
     });
 });
