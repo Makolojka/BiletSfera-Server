@@ -25,9 +25,9 @@ async function createOrUpdate(data) {
 }
 
 async function authorize(userId, password) {
-    const result = await PasswordModel.findOne({ userId: userId, password: password });
+    const result = await PasswordModel.findOne({ userId });
     if (result && mongoConverter(result)) {
-        return true;
+        return result ? result.password : null;
     }
     throw applicationException.new(applicationException.UNAUTHORIZED, 'User and password does not match');
 }
