@@ -54,6 +54,12 @@ const eventSchema = new mongoose.Schema({
 
     // Views of one event
     views: { type: Number, default: 0 },
+
+    // Is event active
+    isActive: {
+        type: Boolean,
+        default: true,
+    },
 }, {
     collection: 'events'
 });
@@ -82,8 +88,8 @@ async function createNewOrUpdate(data) {
     return Promise.resolve().then(() => {
         if (!data.id) {
             return new EventModel(data).save().then(result => {
-                if (result[0]) {
-                    return mongoConverter(result[0]);
+                if (result) {
+                    return mongoConverter(result);
                 }
             });
         } else {

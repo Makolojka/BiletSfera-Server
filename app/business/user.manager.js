@@ -2,38 +2,42 @@ import PasswordDAO from '../DAO/passwordDAO';
 import TokenDAO from '../DAO/tokenDAO';
 import UserDAO from '../DAO/userDAO';
 import applicationException from '../service/applicationException';
-import sha1 from 'sha1';
+import bcrypt from 'bcrypt';
 
 function create(context) {
 
-    function hashString(password) {
-        return sha1(password);
+    async function hashPassword(password) {
+        const saltRounds = 10;
+        return await bcrypt.hash(password, saltRounds);
     }
 
     async function authenticate(name, password) {
-        let userData;
         const user = await UserDAO.getByEmailOrName(name);
         if (!user) {
             throw applicationException.new(applicationException.UNAUTHORIZED, 'User with that email does not exist');
         }
-        userData = await user;
-        await PasswordDAO.authorize(user.id, hashString(password));
-        const token = await TokenDAO.create(userData);
+
+        const hashedPassword = await PasswordDAO.authorize(user.id);
+        if (!hashedPassword || !(await bcrypt.compare(password, hashedPassword))) {
+            throw applicationException.new(applicationException.UNAUTHORIZED, 'Incorrect password');
+        }
+
+        const token = await TokenDAO.create(user);
         return getToken(token);
     }
 
     async function authenticateOrganizer(name, password) {
-        let userData;
         const organizer = await UserDAO.getByEmailOrName(name);
-        console.log(organizer);
         if (!organizer || !organizer.isOrganizer) {
             throw applicationException.new(applicationException.UNAUTHORIZED, 'Organizer with that email does not exist');
         }
 
-        userData = await organizer;
-        await PasswordDAO.authorize(organizer.id, hashString(password));
+        const hashedPassword = await PasswordDAO.authorize(organizer.id);
+        if (!hashedPassword || !(await bcrypt.compare(password, hashedPassword))) {
+            throw applicationException.new(applicationException.UNAUTHORIZED, 'Incorrect password');
+        }
 
-        const token = await TokenDAO.create(userData);
+        const token = await TokenDAO.create(organizer);
         return getToken(token);
     }
 
@@ -43,12 +47,13 @@ function create(context) {
 
     async function createNewOrUpdate(userData) {
         const user = await UserDAO.createNewOrUpdate(userData);
-        if (await userData.password) {
-            return await PasswordDAO.createOrUpdate({userId: user.id, password: hashString(userData.password)});
-        } else {
-            return user;
+        if (userData.password) {
+            const hashedPassword = await hashPassword(userData.password);
+            await PasswordDAO.createOrUpdate({ userId: user.id, password: hashedPassword });
         }
+        return user;
     }
+
 
     async function removeHashSession(userId) {
         return await TokenDAO.remove(userId);

@@ -22,27 +22,58 @@ app.use(cors());
 
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
-mongoose.connect(config.databaseUrl, {
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useFindAndModify: false,
-    useUnifiedTopology: true
-}, (error) => {
-    if (error) {
-        console.error(error);
-    }
-    else {
-        console.info('Connect with database established');
-    }
-});
+if (process.env.NODE_ENV === 'test') {
+    // In memory database for testing environment
+    const { MongoMemoryServer } = require('mongodb-memory-server');
 
-process.on('SIGINT', () => {
-    mongoose.connection.close(function () {
-        console.error('Mongoose default connection disconnected through app termination');
-        process.exit(0);
+    async function connectWithInMemoryDB() {
+        const mongod = await MongoMemoryServer.create();
+        const uri = mongod.getUri();
+
+        mongoose.connect(uri, {
+            useNewUrlParser: true,
+            useCreateIndex: true,
+            useFindAndModify: false,
+            useUnifiedTopology: true
+        }, (error) => {
+            if (error) {
+                console.error(error);
+            } else {
+                console.info('Connected to in-memory database');
+            }
+        });
+
+        process.on('SIGINT', () => {
+            mongoose.connection.close(() => {
+                mongod.stop();
+                console.error('Mongoose default connection disconnected through app termination');
+                process.exit(0);
+            });
+        });
+    }
+    connectWithInMemoryDB();
+} else {
+    // Regular database for production
+    mongoose.connect(config.databaseUrl, {
+        useNewUrlParser: true,
+        useCreateIndex: true,
+        useFindAndModify: false,
+        useUnifiedTopology: true
+    }, (error) => {
+        if (error) {
+            console.error(error);
+        } else {
+            console.info('Connect with database established');
+        }
     });
-});
 
+    process.on('SIGINT', () => {
+        mongoose.connection.close(() => {
+            console.error('Mongoose default connection disconnected through app termination');
+            process.exit(0);
+        });
+    });
+}
 
 routes(app);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
@@ -55,6 +86,6 @@ app.listen(config.port, function () {
     console.info(`Server is running at ${config.port}`)
 });
 
-
+export default app;
 
 

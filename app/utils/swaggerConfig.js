@@ -17,7 +17,6 @@ const options = {
     apis: ['./app/app.js'
         ,'./app/REST/artist.endpoint.js'
         ,'./app/REST/event.endpoint.js'
-        ,'./app/REST/post.endpoint.js'
         ,'./app/REST/ticket.endpoint.js'
         ,'./app/REST/user.endpoint.js'
         ,'./app/REST/transaction.endpoint.js'

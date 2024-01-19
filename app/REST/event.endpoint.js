@@ -40,7 +40,7 @@ const eventEndpoint = (router) => {
             const activeEvents = allEvents.filter(event => {
                 const parsedDate = parseDate(event.date);
 
-                return parsedDate >= currentDate;
+                return parsedDate >= currentDate && event.isActive;
             });
 
             response.status(200).send(activeEvents);
@@ -149,27 +149,7 @@ const eventEndpoint = (router) => {
         }
     });
 
-    /**
-     * @swagger
-     * /api/event:
-     *   post:
-     *     summary: Create a new event
-     *     tags: [Events]
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             $ref: '#/components/schemas/Event'
-     *     responses:
-     *       '200':
-     *         description: The created event
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/Event'
-     */
-    // Create a single event
+    // Create a single event //Deprecated
     router.post('/api/event', async (request, response, next) => {
         try {
             let result = await business.getEventManager().createNewOrUpdate(request.body);
@@ -179,6 +159,45 @@ const eventEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /events/transaction:
+     *   post:
+     *     summary: Create a single event using transactions
+     *     tags: [Events]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/Event'
+     *     responses:
+     *       '200':
+     *         description: Event and tickets created successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   description: Message indicating successful creation
+     *                 event:
+     *                   $ref: '#/components/schemas/Event'
+     *       '500':
+     *         description: Error creating event and tickets
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   description: Message indicating the error
+     *                 error:
+     *                   type: string
+     *                   description: Description of the error
+     */
     // Create a single event using transactions
     router.post('/events/transaction', async (req, res) => {
         try {
@@ -343,6 +362,18 @@ const eventEndpoint = (router) => {
             response.status(200).json({ message: 'Event views incremented successfully' });
         } catch (error) {
             response.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    // Event availability change
+    router.put('/api/event/deactivate/:eventId', async (req, res) => {
+        const eventId = req.params.eventId;
+        try {
+            const result = await EventDAO.model.updateOne({ _id: eventId }, { $set: { isActive: false } });
+            res.json({ success: true, message: 'Event deactivated successfully.' });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ success: false, message: 'Internal server error.' });
         }
     });
 

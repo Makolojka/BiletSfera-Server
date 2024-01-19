@@ -64,27 +64,8 @@ const ticketEndpoint = (router) => {
         response.status(200).send(result.find(obj => obj.id === request.params.id));
     });
 
-    /**
-     * @swagger
-     * /api/events/ticket:
-     *   post:
-     *     summary: Create a new ticket
-     *     tags: [Tickets]
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             $ref: '#/components/schemas/Ticket'
-     *     responses:
-     *       '200':
-     *         description: The created ticket
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/Ticket'
-     */
-    // Create a single ticket
+
+    // Create a single ticket //Deprecated
     router.post('/api/events/ticket', async (request, response, next) => {
         try {
             let result = await business.getTicketManager().createNewOrUpdate(request.body);
@@ -94,6 +75,33 @@ const ticketEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/events/ticket/{id}:
+     *   post:
+     *     summary: Create a single ticket and return object ID
+     *     tags: [Tickets]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         description: ID of the ticket
+     *         schema:
+     *           type: string
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/Ticket'
+     *     responses:
+     *       '201':
+     *         description: The created ticket with ID
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Ticket'
+     */
     // Create a single ticket and return object id
     router.post('/api/events/ticket/id', async (request, response, next) => {
         try {

@@ -166,17 +166,17 @@ async function calculateTotalEarningsForOrganiser(organiserName) {
         // Find events by the organizer's name
         const eventsByOrganiser = await EventModel.find({ organiser: organiserName });
 
-        console.log("eventsByOrganiser: ",eventsByOrganiser)
+        // console.log("eventsByOrganiser: ",eventsByOrganiser)
         // Retrieve tickets from events and convert them to ObjectId strings
         const eventTickets = eventsByOrganiser.reduce((tickets, event) => {
             return tickets.concat(event.tickets.map(ticketId => String(ticketId)));
         }, []);
-        console.log("eventTickets: ",eventTickets)
+        // console.log("eventTickets: ",eventTickets)
         // Find transactions for tickets linked to events of the organizer
         const transactions = await TransactionModel.find({
             'tickets.ticketId': { $in: eventTickets }
         });
-        console.log("transactions: ",transactions)
+        // console.log("transactions: ",transactions)
         // Calculate total earnings for the organizer
         let totalEarningsForOrganiser = 0;
 
@@ -188,7 +188,7 @@ async function calculateTotalEarningsForOrganiser(organiserName) {
                 }
             });
         });
-        console.log("totalEarningsForOrganiser: ",totalEarningsForOrganiser)
+        // console.log("totalEarningsForOrganiser: ",totalEarningsForOrganiser)
 
         return totalEarningsForOrganiser;
     } catch (error) {

@@ -153,6 +153,45 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/user/update:
+     *   post:
+     *     summary: Update an existing user
+     *     description: Endpoint to update an existing user's information.
+     *     tags: [Users]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/User'
+     *     responses:
+     *       '200':
+     *         description: The updated user
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/User'
+     *       '500':
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 error:
+     *                   type: string
+     *                   description: Description of the error
+     *     parameters:
+     *       - in: header
+     *         name: Authorization
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: Bearer token for authentication
+     */
+    //Update user
     router.post('/api/user/update', async (request, response, next) => {
         console.log("update body: ", request.body)
         try {
@@ -163,12 +202,59 @@ const userEndpoint = (router) => {
         }
     });
 
-
-    router.get('/api/user/preferences/:userId', async (req, res) => {
+    /**
+     * @swagger
+     * /api/user/preferences/{userId}:
+     *   get:
+     *     summary: Get user preferences by ID
+     *     description: Endpoint to retrieve user preferences by user ID.
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: ID of the user to retrieve preferences
+     *     responses:
+     *       '200':
+     *         description: User preferences retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 oneTimeMonitChecked:
+     *                   type: boolean
+     *                   description: Indicates if one-time monitoring is checked
+     *       '404':
+     *         description: User not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   description: Reason for user not found
+     *             example:
+     *               message: User not found
+     *       '500':
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   description: Description of the server error
+     */
+    //Get user preferences
+    router.get('/api/user/preferences/:userId', auth, async (req, res) => {
         try {
             const userId = req.params.userId;
 
-            // Find the user by userId and return the oneTimeMonitChecked flag state
             const user = await UserDAO.model.findOne({ _id: userId });
             if (!user) {
                 return res.status(404).json({ message: 'User not found' });
@@ -181,6 +267,55 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/user/{userId}/preferences/onetimemonit:
+     *   put:
+     *     summary: Update oneTimeMonitChecked flag for a user
+     *     description: Endpoint to update the oneTimeMonitChecked flag for a user by user ID.
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: ID of the user to update the oneTimeMonitChecked flag
+     *     responses:
+     *       '200':
+     *         description: oneTimeMonitChecked flag updated successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   description: Indicates the success of the operation
+     *                   example: oneTimeMonitChecked updated successfully
+     *       '404':
+     *         description: User not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   description: Reason for user not found
+     *                   example: User not found
+     *       '500':
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   description: Description of the server error
+     *                   example: Internal server error
+     */
     // Update the oneTimeMonitChecked flag for a user
     router.put('/api/user/:userId/preferences/onetimemonit', async (req, res) => {
         const { userId } = req.params;
@@ -238,55 +373,6 @@ const userEndpoint = (router) => {
         }
     });
 
-    /**
-     * @swagger
-     * /api/user/{userId}/cart/add-ticket/{eventId}/{ticketId}:
-     *   post:
-     *     summary: Add ticket(s) to user's cart
-     *     tags: [Users]
-     *     parameters:
-     *       - in: path
-     *         name: userId
-     *         schema:
-     *           type: string
-     *         required: true
-     *         description: ID of the user
-     *       - in: path
-     *         name: eventId
-     *         schema:
-     *           type: string
-     *         required: true
-     *         description: ID of the event
-     *       - in: path
-     *         name: ticketId
-     *         schema:
-     *           type: string
-     *         required: true
-     *         description: ID of the ticket
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               quantity:
-     *                 type: number
-     *             required:
-     *               - quantity
-     *     responses:
-     *       '200':
-     *         description: Ticket(s) added to cart successfully
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 success:
-     *                   type: boolean
-     *                 user:
-     *                   $ref: '#/components/schemas/User'
-     */
     //Cart
     // Add ticket to cart
     router.post('/api/user/:userId/cart/add-ticket/:eventId/:ticketId', auth, async (req, res) => {
@@ -309,6 +395,71 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/user/{userId}/cart/add-tickets/{eventId}/{ticketId}:
+     *   post:
+     *     summary: Add ticket(s) to user's cart
+     *     description: Endpoint to add ticket(s) to a user's cart by user ID, event ID, and ticket ID.
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: ID of the user
+     *       - in: path
+     *         name: eventId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: ID of the event
+     *       - in: path
+     *         name: ticketId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: ID of the ticket
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               quantity:
+     *                 type: number
+     *                 description: Number of tickets to add
+     *               chosenSeats:
+     *                 type: array
+     *                 items:
+     *                   type: string
+     *                 description: Array of chosen seat IDs
+     *     responses:
+     *       '200':
+     *         description: Ticket(s) added to cart successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                   description: Indicates the success of the operation
+     *                 user:
+     *                   $ref: '#/components/schemas/User'
+     *       '500':
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 error:
+     *                   type: string
+     *                   description: Description of the server error
+     */
     //Cart
     // Add ticket(s) to cart
     router.post('/api/user/:userId/cart/add-tickets/:eventId/:ticketId', auth, async (req, res) => {
@@ -450,6 +601,45 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/user/{userId}/preferences:
+     *   get:
+     *     summary: Get user's preferences by ID
+     *     description: Endpoint to retrieve user's preferences by user ID.
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: ID of the user to retrieve preferences
+     *     responses:
+     *       '200':
+     *         description: User's preferences retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                   description: Indicates the success of the operation
+     *                 preferences:
+     *                   type: object
+     *                   description: Object containing user preferences
+     *       '500':
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 error:
+     *                   type: string
+     *                   description: Description of the server error
+     */
     // Get user's preferences
     router.get('/api/user/:userId/preferences', auth, async (req, res) => {
         const { userId } = req.params;
@@ -658,6 +848,44 @@ const userEndpoint = (router) => {
     // Organisers endpoints
     // TODO: przenieść do osobnego DAO
 
+    /**
+     * @swagger
+     * /api/organiser/{userId}:
+     *   get:
+     *     summary: Get organiser's owned events by ID
+     *     description: Endpoint to retrieve organiser's owned events by organiser ID.
+     *     tags: [Organiser]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: ID of the organiser to retrieve owned events
+     *     responses:
+     *       '200':
+     *         description: Organiser's owned events retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 ownedEvents:
+     *                   type: array
+     *                   items:
+     *                     $ref: '#/components/schemas/Event'
+     *                   description: List of events owned by the organizer
+     *       '500':
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 error:
+     *                   type: string
+     *                   description: Description of the server error
+     */
     // Get organiser ownedEvents
     router.get('/api/organizer/:userId', auth, async (req, res) => {
         const { userId } = req.params;
@@ -670,6 +898,49 @@ const userEndpoint = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/organiser/{userId}/add-event/{eventId}:
+     *   post:
+     *     summary: Add event to organiser's ownedEvents
+     *     description: Endpoint to add an event to an organiser's ownedEvents by organiser ID and event ID.
+     *     tags: [Organiser]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: ID of the organiser to add the event
+     *       - in: path
+     *         name: eventId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: ID of the event to add
+     *     responses:
+     *       '200':
+     *         description: Event added to organiser's ownedEvents successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   description: Indicates the success of the operation
+     *                   example: Event added to organiser's ownedEvents successfully
+     *       '500':
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 error:
+     *                   type: string
+     *                   description: Description of the server error
+     */
     // Add event to organizer's ownedEvents
     router.post('/api/organizer/:userId/add-event/:eventId', auth, async (req, res) => {
         const { userId, eventId } = req.params;
