@@ -54,6 +54,12 @@ const eventSchema = new mongoose.Schema({
 
     // Views of one event
     views: { type: Number, default: 0 },
+
+    // Is event active
+    isActive: {
+        type: Boolean,
+        default: true,
+    },
 }, {
     collection: 'events'
 });

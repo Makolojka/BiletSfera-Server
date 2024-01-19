@@ -40,7 +40,7 @@ const eventEndpoint = (router) => {
             const activeEvents = allEvents.filter(event => {
                 const parsedDate = parseDate(event.date);
 
-                return parsedDate >= currentDate;
+                return parsedDate >= currentDate && event.isActive;
             });
 
             response.status(200).send(activeEvents);
@@ -362,6 +362,18 @@ const eventEndpoint = (router) => {
             response.status(200).json({ message: 'Event views incremented successfully' });
         } catch (error) {
             response.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    // Event availability change
+    router.put('/api/event/deactivate/:eventId', async (req, res) => {
+        const eventId = req.params.eventId;
+        try {
+            const result = await EventDAO.model.updateOne({ _id: eventId }, { $set: { isActive: false } });
+            res.json({ success: true, message: 'Event deactivated successfully.' });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ success: false, message: 'Internal server error.' });
         }
     });
 
