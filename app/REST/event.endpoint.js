@@ -202,7 +202,7 @@ const eventEndpoint = (router) => {
     router.post('/events/transaction', async (req, res) => {
         try {
             const newEventDetails = req.body;
-            console.log("newEventDetails: ",newEventDetails)
+            console.log("newEventDetails: ", newEventDetails)
 
             const createdEvent = await EventDAO.startEventTransaction(newEventDetails);
 
@@ -374,6 +374,19 @@ const eventEndpoint = (router) => {
         } catch (error) {
             console.error(error);
             res.status(500).json({ success: false, message: 'Internal server error.' });
+        }
+    });
+
+    // Partial update for event
+    router.patch('/api/event/update', async (request, response, next) => {
+        try {
+            console.log("update body: ", request.body);
+            console.log("update body eventId: ", request.body.eventData.id);
+            const result = await business.getEventManager().createNewOrUpdate(request.body.eventData);
+
+            response.status(200).json(result);
+        } catch (error) {
+            applicationException.errorHandler(error, response);
         }
     });
 

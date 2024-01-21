@@ -236,6 +236,7 @@ async function createEventWithTickets(newEventDetails, ticketIds, session) {
 
         let createdEvent;
         if (!newEventDetails.id) {
+            console.log('Result from saving new event newEventDetails.roomSchema:', newEventDetails.roomSchema); // Check this log
             const result = await new EventModel(newEventDetails).save({ session });
             console.log('Result from saving new event:', result); // Check this log
             if (result) {
