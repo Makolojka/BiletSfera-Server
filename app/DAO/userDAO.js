@@ -29,7 +29,6 @@ const userSchema = new mongoose.Schema({
                 {
                     ticket: { type: mongoose.Schema.Types.ObjectId, ref: 'tickets', required: true },
                     quantity: { type: Number, default: 1, required: true },
-                    // seatNumbers: { type: String, required: false, default: '' }
                     seatNumbers: [{ type: String, required: true, default: '' }]
                 }
             ]
@@ -115,14 +114,11 @@ async function addToCart(userId, eventId, ticketId, quantity) {
                 tickets: [{ ticket: ticketId, quantity }]
             });
         } else {
-            // If the cart item exists, find the ticket that matches the provided ticketId
             const ticket = cartItem.tickets.find(t => t.ticket.toString() === ticketId);
 
             if (ticket) {
-                // If the ticket exists, update its quantity
                 ticket.quantity += quantity || 1;
             } else {
-                // If the ticket does not exist, add a new ticket to the cart item
                 cartItem.tickets.push({ ticket: ticketId, quantity });
             }
         }
@@ -134,59 +130,6 @@ async function addToCart(userId, eventId, ticketId, quantity) {
         throw error;
     }
 }
-
-// async function addWithSeatsToCart(userId, eventId, ticketId, quantity, chosenSeats = [], session) {
-//     try {
-//         const user = await UserModel.findOne({ _id: userId });
-//         if (!user) {
-//             throw applicationException.new(applicationException.NOT_FOUND, 'User not found');
-//         }
-//
-//         // Find the cart item that matches the provided eventId
-//         const cartItem = user.cart.find(item => item.event.toString() === eventId);
-//
-//         let duplicateSeats = [];
-//
-//         if (cartItem) {
-//             // Find duplicate seats that already exist in the cart
-//             duplicateSeats = chosenSeats.filter(chosenSeat => {
-//                 return cartItem.tickets.some(ticket => ticket.seatNumbers === chosenSeat.id);
-//             });
-//         }
-//
-//         if (duplicateSeats.length > 0) {
-//             // Handle scenario where duplicate seats exist in the cart
-//             throw applicationException.new(applicationException.CONFLICT, 'Some seats are already in the cart');
-//         }
-//
-//         if (!cartItem) {
-//             console.log("seatNumbers: ", chosenSeats);
-//             console.log("seatNumbers type of: ", typeof chosenSeats);
-//             // If no cart item exists for the event, create a new one with the provided ticket and quantity
-//             user.cart.push({
-//                 event: eventId,
-//                 tickets: [{ ticket: ticketId, quantity: quantity, seatNumbers: chosenSeats }],
-//         });
-//         } else {
-//             // If the cart item exists, find the ticket that matches the provided ticketId
-//             const ticket = cartItem.tickets.find(t => t.ticket.toString() === ticketId);
-//
-//             if (ticket) {
-//                 // If the ticket exists, update its quantity
-//                 ticket.quantity += quantity || 1;
-//             } else {
-//                 // If the ticket does not exist, add a new ticket to the cart item
-//                 cartItem.tickets.push({ ticket: ticketId, quantity: quantity, seatNumbers: chosenSeats });
-//             }
-//         }
-//
-//         // Save the updated user with the modified cart
-//         const updatedUser = await user.save();
-//         return mongoConverter(updatedUser);
-//     } catch (error) {
-//         throw error;
-//     }
-// }
 
 async function addWithSeatsToCart(userId, eventId, ticketId, quantity, chosenSeats, session) {
     try {
@@ -374,7 +317,6 @@ async function getLikedOrFollowedEvents(userId, actionType) {
     await UserModel.findOne({ _id: userId}).then(function (result) {
         if (result) {
             user = result.toObject();
-            // console.log("user likedEvents: "+user.likedEvents);
         }
     });
     if(!user){
@@ -480,8 +422,8 @@ async function updateIsAvailableForEventSeats(eventId, chosenSeats, session) {
                 if (seat) {
                     seat.isAvailable = false;
                     console.log("Updated seat availability for seat ID: ", seat.id);
-                    await event.save(); // Save changes after updating isAvailable
-                    break; // Exit the loop once seat is found
+                    await event.save();
+                    break;
                 }
             }
         }

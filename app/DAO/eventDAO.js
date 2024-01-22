@@ -99,7 +99,6 @@ async function createNewOrUpdate(data) {
 }
 
 // Followers and Likes
-// TODO: zabezpieczyć przed innymi akcjami
 async function addLikeOrFollower(eventId, userId, actionType) {
     try {
         const event = await EventModel.findOne({ _id: eventId });
@@ -108,12 +107,10 @@ async function addLikeOrFollower(eventId, userId, actionType) {
             if (event) {
                 if(!checkLikes)
                 {
-                    //If recipe is not liked, like it
                     return EventModel.updateOne({ _id : eventId }, {$push: {likes: userId}}, {new: true})
                 }
                 else
                 {
-                    //If recipe is liked, dislike it
                     return EventModel.updateOne({ _id : eventId }, {$pull: {likes: userId}})
                 }
             } else {
@@ -126,12 +123,10 @@ async function addLikeOrFollower(eventId, userId, actionType) {
             if (event) {
                 if(!checkFollows)
                 {
-                    //If recipe is not liked, like it
                     return EventModel.updateOne({ _id : eventId }, {$push: {followers: userId}}, {new: true})
                 }
                 else
                 {
-                    //If recipe is liked, dislike it
                     return EventModel.updateOne({ _id : eventId }, {$pull: {followers: userId}})
                 }
             } else {
@@ -164,19 +159,17 @@ async function getLikesOrFollowersCount(eventId, actionType, res) {
 
         const count = event[fieldToCount].length;
 
-        // Send the count as a response
         res.status(200).json({ count });
     } catch (error) {
-        // Handle errors and send an error response
         res.status(500).json({ error: error.message });
     }
 }
 
+// Increment event views count
 async function incrementEventViews(eventId) {
     try {
         const event = await EventModel.findOne({ _id: eventId });
         if (event) {
-            // Increment the views property by 1
             const updatedEvent = await EventModel.updateOne(
                 { _id: eventId },
                 { $inc: { views: 1 } }
@@ -191,66 +184,22 @@ async function incrementEventViews(eventId) {
 }
 
 // Create event using transaction
-// async function startEventTransaction(newEventDetails) {
-//     const session = await mongoose.startSession();
-//     try {
-//         session.startTransaction();
-//
-//         const ticketIds = await TicketDAO.createTicketsAndGetIds(newEventDetails.tickets, session);
-//
-//         // Proceed with event creation using ticketIds
-//         const createdEvent = await TicketDAO.createEvent(newEventDetails, ticketIds, session);
-//
-//         await session.commitTransaction();
-//         session.endSession();
-//
-//         return createdEvent;
-//     } catch (error) {
-//         await session.abortTransaction();
-//         session.endSession();
-//         throw new Error('Transaction aborted: ' + error.message);
-//     }
-// }
-// async function createEventWithTickets(newEventDetails, ticketIds, session) {
-//     try {
-//         newEventDetails.tickets = ticketIds;
-//         const eventCreationPromise =  Promise.resolve().then(() => {
-//             if (!newEventDetails.id) {
-//                 return new EventModel(newEventDetails).save({session}).then(result => {
-//                     if (result[0]) {
-//                         return mongoConverter(result[0]);
-//                     }
-//                 });
-//             } else {
-//                 return EventModel.findByIdAndUpdate(newEventDetails.id, _.omit(newEventDetails, 'id'), {new: true, session});
-//             }
-//         });
-//         return eventCreationPromise;
-//     } catch (error) {
-//         throw new Error('Error creating event: ' + error.message);
-//     }
-// }
 async function createEventWithTickets(newEventDetails, ticketIds, session) {
     try {
         newEventDetails.tickets = ticketIds;
 
         let createdEvent;
         if (!newEventDetails.id) {
-            console.log('Result from saving new event newEventDetails.roomSchema:', newEventDetails.roomSchema); // Check this log
             const result = await new EventModel(newEventDetails).save({ session });
-            console.log('Result from saving new event:', result); // Check this log
             if (result) {
                 createdEvent = mongoConverter(result);
             }
         } else {
             const updatedEvent = await EventModel.findByIdAndUpdate(newEventDetails.id, _.omit(newEventDetails, 'id'), { new: true, session });
-            console.log('Result from updating event:', updatedEvent); // Check this log
             if (updatedEvent) {
                 createdEvent = mongoConverter(updatedEvent);
             }
         }
-
-        console.log('Final created event:', createdEvent); // Check this log
         return createdEvent;
     } catch (error) {
         throw new Error('Error creating event: ' + error.message);
