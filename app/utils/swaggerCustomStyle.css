@@ -1,0 +1,27 @@
+/* Custom CSS for Swagger UI */
+.swagger-ui .topbar {
+    display: none; /* Hide the top bar with the title and version info */
+}
+
+.swagger-ui .opblock {
+    width: 100%; /* Set the width of operation blocks to 100% */
+    margin: 20px 0; /* Add some space between operation blocks */
+    border: 1px solid #ccc; /* Add a border around operation blocks for better separation */
+}
+
+.swagger-ui .opblock-summary {
+    width: auto; /* Set the width of operation summaries to auto */
+    margin: 0; /* Reset margin for operation summaries */
+}
+
+.swagger-ui .opblock-summary-path {
+    font-size: 1.2em; /* Increase font size for operation paths */
+}
+
+.swagger-ui .opblock-summary-method {
+    font-size: 1.2em; /* Increase font size for operation methods */
+}
+
+.swagger-ui .opblock-description {
+    width: auto; /* Set the width of operation descriptions to auto */
+}
