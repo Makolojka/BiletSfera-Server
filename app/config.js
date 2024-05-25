@@ -1,5 +1,5 @@
 const config = {
-    port: process.env.PORT || 3001,databaseUrl: process.env.MONGODB_URI || 'mongodb+srv://Makolojka:0UIaFpoFtRh1pOga@clustermk.ka2ptj8.mongodb.net/?retryWrites=true&w=majority',
+    port: process.env.PORT || 3001,databaseUrl: process.env.MONGODB_URI || 'mongodb+srv://mongoDB_URL',
     JwtSecret: process.env.JWT_SECRET || 'secret'
 };
 
